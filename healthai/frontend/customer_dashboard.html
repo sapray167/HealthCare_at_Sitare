@@ -777,7 +777,7 @@
       const fd = new FormData();
       fd.append("file", fileInput.files[0]);
       fd.append("form_type", formType);
-      fd.append("user_email", currentCustomerEmail);
+      fd.append("user_email", currentCustomerEmail || "dr.smith@health.ai");
 
       try {
         const res = await fetch(`${API_BASE}/customer-upload`, { method: "POST", body: fd });
