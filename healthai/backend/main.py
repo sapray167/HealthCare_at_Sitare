@@ -17,7 +17,7 @@ from schemas import FORM_SCHEMAS, get_schema
 from extractor import extract_fields
 from drafter import generate_draft
 from db import (
-    init_db, insert_record, update_record_draft, get_record, list_records,
+    init_db, insert_record, update_record_draft, get_record, get_conn, list_records,
     get_stats, create_user, verify_user, save_notification, update_record_merged,
     insert_pending_record, update_record_extraction, mark_notification_sent
 )
@@ -54,11 +54,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Supabase database on startup
+# Initialize SQLite database on startup
 init_db()
 
 
-@app.post("/register")
+@app.post("/api/register")
 def register(req: RegisterRequest):
     if not req.full_name or len(req.full_name.strip()) < 2:
         raise HTTPException(status_code=400, detail="Please provide your full name.")
@@ -79,7 +79,7 @@ def register(req: RegisterRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.post("/login")
+@app.post("/api/login")
 def login(req: LoginRequest):
     try:
         if not req.email or "@" not in req.email:
@@ -106,7 +106,7 @@ def login(req: LoginRequest):
         raise HTTPException(status_code=500, detail="Internal server error during authentication. Please try again.")
 
 
-@app.get("/form-types")
+@app.get("/api/form-types")
 def form_types():
     """So the frontend can build the dropdown + labels dynamically."""
     return {
@@ -115,7 +115,7 @@ def form_types():
     }
 
 
-@app.post("/customer-upload")
+@app.post("/api/customer-upload")
 async def customer_upload(file: UploadFile = File(...), form_type: str = Form(...), user_email: str = Form(...)):
     try:
         get_schema(form_type)
@@ -140,7 +140,7 @@ async def customer_upload(file: UploadFile = File(...), form_type: str = Form(..
     }
 
 
-@app.post("/extract-record/{record_id}")
+@app.post("/api/extract-record/{record_id}")
 async def extract_record(record_id: int):
     rec = get_record(record_id)
     if not rec:
@@ -171,7 +171,7 @@ async def extract_record(record_id: int):
     return result
 
 
-@app.post("/extract")
+@app.post("/api/extract")
 async def extract(file: UploadFile = File(...), form_type: str = Form(...), user_email: str = Form("dr.smith@health.ai")):
     try:
         get_schema(form_type)
@@ -194,18 +194,22 @@ async def extract(file: UploadFile = File(...), form_type: str = Form(...), user
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Extraction failed: {e}")
 
-    # Store record in Supabase DB
+    # Store record in SQLite DB
     fields = result.get("fields", {})
     total_fields = len(fields)
     missing_fields = sum(1 for info in fields.values() if isinstance(info, dict) and info.get("confidence") == "missing")
-    record_id = insert_record(form_type, file.filename, fields, total_fields, missing_fields, user_email=user_email, file_path=str(saved_path))
+    record_id = insert_record(form_type, file.filename, fields, total_fields, missing_fields, user_email=user_email)
+    
+    # Update file_path for record
+    with get_conn() as conn:
+        conn.execute("UPDATE records SET file_path = ? WHERE id = ?", (str(saved_path), record_id))
 
     result["record_id"] = record_id
     return result
 
 
 
-@app.post("/generate", response_class=PlainTextResponse)
+@app.post("/api/generate", response_class=PlainTextResponse)
 async def generate(form_type: str = Form(...), fields_json: str = Form(...), record_id: int = Form(None)):
     try:
         fields = json.loads(fields_json)
@@ -223,17 +227,17 @@ async def generate(form_type: str = Form(...), fields_json: str = Form(...), rec
     return draft
 
 
-@app.get("/stats")
+@app.get("/api/stats")
 def stats(user_email: str = None):
     return get_stats(user_email=user_email)
 
 
-@app.get("/records")
+@app.get("/api/records")
 def records(limit: int = 50, user_email: str = None):
     return list_records(limit=limit, user_email=user_email)
 
 
-@app.get("/records/{record_id}")
+@app.get("/api/records/{record_id}")
 def record(record_id: int):
     rec = get_record(record_id)
     if not rec:
@@ -241,12 +245,12 @@ def record(record_id: int):
     return rec
 
 
-@app.get("/platforms")
+@app.get("/api/platforms")
 def platforms():
     return list_platforms()
 
 
-@app.get("/records/{record_id}/missing-details")
+@app.get("/api/records/{record_id}/missing-details")
 def missing_details(record_id: int, platform: str = None):
     rec = get_record(record_id)
     if not rec:
@@ -285,7 +289,7 @@ def missing_details(record_id: int, platform: str = None):
     }
 
 
-@app.post("/send-missing-email")
+@app.post("/api/send-missing-email")
 def send_missing_email(req: SendEmailRequest):
     rec = get_record(req.record_id)
     if not rec:
@@ -318,7 +322,7 @@ def send_missing_email(req: SendEmailRequest):
     return res
 
 
-@app.post("/submit-missing")
+@app.post("/api/submit-missing")
 def submit_missing(req: SubmitMissingRequest):
     rec = get_record(req.record_id)
     if not rec:
@@ -359,16 +363,21 @@ def submit_missing(req: SubmitMissingRequest):
     }
 
 
-@app.get("/health")
+@app.get("/api/health")
 def health():
     return {"status": "ok"}
 
 
-# Serve static frontend files
+# Serve frontend files
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
+
 if FRONTEND_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+    app.mount(
+        "/frontend",
+        StaticFiles(directory=str(FRONTEND_DIR)),
+        name="frontend"
+    )
 
     @app.get("/")
-    def read_root():
-        return RedirectResponse(url="/static/login.html")
+    async def root():
+        return FileResponse(FRONTEND_DIR / "login.html")

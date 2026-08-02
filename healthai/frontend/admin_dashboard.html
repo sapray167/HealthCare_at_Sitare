@@ -380,7 +380,7 @@
 </div>
 
 <script>
-const API_BASE = window.location.protocol.startsWith('http') ? window.location.origin : "http://localhost:8000";
+const API_BASE = (window.location.protocol.startsWith('http') ? window.location.origin : "http://localhost:8000") + '/api';
 let SCHEMAS = {};
 let currentFormType = null;
 let currentRecordId = null;

@@ -473,9 +473,9 @@
 </div>
 
 <script>
-  const API_BASE = window.location.protocol.startsWith('http') 
+  const API_BASE = (window.location.protocol.startsWith('http') 
     ? window.location.origin 
-    : 'http://127.0.0.1:8000';
+    : 'http://127.0.0.1:8000') + '/api';
 
   const params = new URLSearchParams(window.location.search);
   const recordId = params.get('record_id') || 1;

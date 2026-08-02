@@ -402,10 +402,10 @@
 </div>
 
 <script>
-  // Determine backend base URL safely
-  const API_BASE = window.location.protocol.startsWith('http') 
+  // Determine backend base URL safely with /api prefix
+  const API_BASE = (window.location.protocol.startsWith('http') 
     ? window.location.origin 
-    : 'http://127.0.0.1:8000';
+    : 'http://127.0.0.1:8000') + '/api';
 
   // Get destination dashboard URL based on role
   function getDashboardUrl(role) {
