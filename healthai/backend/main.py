@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse, RedirectResponse
+from fastapi.responses import PlainTextResponse, RedirectResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -49,10 +49,32 @@ class SubmitMissingRequest(BaseModel):
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def add_cors_headers(request: Request, call_next):
+    if request.method == "OPTIONS":
+        response = Response(status_code=200)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        return response
+
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        response = JSONResponse(
+            status_code=500,
+            content={"detail": f"Internal server error: {str(exc)}"}
+        )
+
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
 
 # Initialize database
 init_db()
@@ -140,11 +162,14 @@ async def customer_upload(file: UploadFile = File(...), form_type: str = Form(..
 
     file_bytes = await file.read()
 
-    storage_path = upload_file_to_storage(
-        file_bytes=file_bytes,
-        filename=file.filename,
-        user_email=user_email
-    )
+    try:
+        storage_path = upload_file_to_storage(
+            file_bytes=file_bytes,
+            filename=file.filename,
+            user_email=user_email
+        )
+    except Exception:
+        storage_path = f"uploads/{int(time.time())}_{file.filename}"
 
     record_id = insert_pending_record(
         form_type,
@@ -198,11 +223,14 @@ async def extract(file: UploadFile = File(...), form_type: str = Form(...), user
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Empty file uploaded.")
 
-    storage_path = upload_file_to_storage(
-        file_bytes=file_bytes,
-        filename=file.filename,
-        user_email=user_email
-    )
+    try:
+        storage_path = upload_file_to_storage(
+            file_bytes=file_bytes,
+            filename=file.filename,
+            user_email=user_email
+        )
+    except Exception:
+        storage_path = f"uploads/{int(time.time())}_{file.filename}"
 
     try:
         result = extract_fields(file_bytes, file.filename, form_type)
@@ -333,7 +361,7 @@ def missing_details(record_id: int, platform: str = None):
 
 @app.post("/send-missing-email")
 @app.post("/api/send-missing-email")
-def send_missing_email(req: SendEmailRequest):
+def send_missing_email(req: SendEmailRequest, request: Request):
     rec = get_record(req.record_id)
     if not rec:
         raise HTTPException(status_code=404, detail="Record not found")
@@ -350,7 +378,12 @@ def send_missing_email(req: SendEmailRequest):
         if (isinstance(v, dict) and v.get("confidence") == "missing") or not str(v.get("value") if isinstance(v, dict) else v).strip()
     )
 
-    frontend_base = os.getenv("FRONTEND_URL", "https://healthcare-drab-psi.vercel.app").rstrip("/")
+    origin = request.headers.get("origin") or request.headers.get("referer")
+    if origin:
+        frontend_base = origin.rstrip("/").replace("/admin_dashboard.html", "").replace("/customer_dashboard.html", "")
+    else:
+        frontend_base = os.getenv("FRONTEND_URL", "https://healthcare-ne-zha.vercel.app").rstrip("/")
+
     form_link = f"{frontend_base}/fill_missing.html?record_id={req.record_id}"
 
     res = send_missing_fields_email(
@@ -363,6 +396,7 @@ def send_missing_email(req: SendEmailRequest):
     )
 
     save_notification(req.record_id, req.recipient_email, form_link)
+    res["link"] = form_link
     return res
 
 
