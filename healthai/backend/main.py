@@ -19,7 +19,7 @@ from drafter import generate_draft
 from db import (
     init_db, insert_record, update_record_draft, get_record, list_records,
     get_stats, create_user, verify_user, save_notification, update_record_merged,
-    insert_pending_record, update_record_extraction, mark_notification_sent, get_conn
+    insert_pending_record, update_record_extraction, mark_notification_sent
 )
 from contact_guide import detect_platform, get_field_guidance, list_platforms
 from emailer import send_missing_fields_email
