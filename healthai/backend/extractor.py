@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 import google.generativeai as genai
@@ -11,7 +12,11 @@ from schemas import get_schema
 load_dotenv()
 
 def _configure_genai():
+    env_path = Path(__file__).parent / ".env"
+    if env_path.exists():
+        load_dotenv(dotenv_path=env_path, override=True)
     load_dotenv(override=True)
+    
     api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
     if not api_key:
         raise ValueError("Gemini API key is missing. Please create a .env file in the backend folder with GEMINI_API_KEY=your_key or set the GEMINI_API_KEY environment variable.")

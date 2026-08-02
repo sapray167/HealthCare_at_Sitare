@@ -1,5 +1,10 @@
+import sys
 import json
 from pathlib import Path
+
+# Ensure backend directory is in python path
+sys.path.insert(0, str(Path(__file__).parent))
+
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse, RedirectResponse, FileResponse
@@ -8,6 +13,7 @@ from pydantic import BaseModel
 
 import time
 from schemas import FORM_SCHEMAS, get_schema
+
 from extractor import extract_fields
 from drafter import generate_draft
 from db import (
@@ -75,23 +81,29 @@ def register(req: RegisterRequest):
 
 @app.post("/login")
 def login(req: LoginRequest):
-    if not req.email or "@" not in req.email:
-        raise HTTPException(status_code=400, detail="Please enter a valid email address.")
-    if not req.password:
-        raise HTTPException(status_code=400, detail="Please enter your password.")
-    
-    user = verify_user(req.email, req.password)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid email or password. Please check your credentials or create a new account.")
+    try:
+        if not req.email or "@" not in req.email:
+            raise HTTPException(status_code=400, detail="Please enter a valid email address.")
+        if not req.password:
+            raise HTTPException(status_code=400, detail="Please enter your password.")
+        
+        user = verify_user(req.email, req.password)
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid email or password. Please check your credentials or create a new account.")
 
-    return {
-        "status": "success",
-        "email": user["email"],
-        "full_name": user["full_name"],
-        "role": user.get("role", "user"),
-        "token": f"user_token_{user['id']}",
-        "message": "Authenticated successfully"
-    }
+        return {
+            "status": "success",
+            "email": user["email"],
+            "full_name": user["full_name"],
+            "role": user.get("role", "user"),
+            "token": f"user_token_{user['id']}",
+            "message": "Authenticated successfully"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error during login endpoint execution: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error during authentication. Please try again.")
 
 
 @app.get("/form-types")
