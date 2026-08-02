@@ -3,11 +3,10 @@ import os
 import sys
 import time
 from pathlib import Path
+from dotenv import load_dotenv
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-BACKEND_DIR = BASE_DIR / "backend"
-
-sys.path.insert(0, str(BACKEND_DIR))
+# Load environment variables
+load_dotenv()
 
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -55,7 +54,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize DB
+# Initialize database
 init_db()
 
 
@@ -413,3 +412,29 @@ def submit_missing(req: SubmitMissingRequest):
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+
+# Serve frontend static files
+FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
+
+if FRONTEND_DIR.exists():
+    app.mount(
+        "/static",
+        StaticFiles(directory=str(FRONTEND_DIR)),
+        name="static"
+    )
+    app.mount(
+        "/frontend",
+        StaticFiles(directory=str(FRONTEND_DIR)),
+        name="frontend"
+    )
+
+@app.get("/")
+def read_root():
+    return RedirectResponse(url="/static/index.html")
+
+@app.get("/login.html")
+@app.get("/static/login.html")
+@app.get("/frontend/login.html")
+def redirect_login():
+    return RedirectResponse(url="/static/index.html")
