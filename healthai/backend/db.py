@@ -57,6 +57,15 @@ def init_db():
             print(f"Notice: Could not remove legacy file {db_path} ({e})")
 
 
+def get_conn():
+    """Backwards compatibility stub to prevent ImportError when imported."""
+    import sqlite3
+    db_path = Path(__file__).parent / "records.db"
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
 def create_user(full_name: str, email: str, password: str, role: str = "user") -> dict:
     email_clean = email.strip().lower()
     sp = get_supabase()
