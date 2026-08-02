@@ -52,6 +52,8 @@ class RegisterRequest(BaseModel):
     full_name: str
     email: str
     password: str
+    role: str = "user"
+    org_id: str = None
 
 class SendEmailRequest(BaseModel):
     record_id: int
@@ -119,11 +121,19 @@ def register(req: RegisterRequest):
     if not req.password or len(req.password) < 4:
         raise HTTPException(status_code=400, detail="Password must be at least 4 characters long.")
 
+    role = (req.role or "user").strip().lower()
+    if role == "admin":
+        if not req.org_id or req.org_id.strip().lower() != "sap167":
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid Organisation ID. Only authorized administrators with Organisation ID (sap167) can register as Admin."
+            )
+
     try:
-        user = create_user(req.full_name, req.email, req.password)
+        user = create_user(req.full_name, req.email, req.password, role=role)
         return {
             "status": "success",
-            "message": "Account created successfully!",
+            "message": f"{'System Admin' if role == 'admin' else 'Customer'} account created successfully!",
             "user": user,
             "token": f"user_token_{user['id']}"
         }

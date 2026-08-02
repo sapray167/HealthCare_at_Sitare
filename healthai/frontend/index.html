@@ -370,6 +370,30 @@
 
     <!-- REGISTER FORM -->
     <form id="registerForm" class="hidden" onsubmit="handleRegister(event)">
+      <!-- Account Type Selection -->
+      <div class="form-group">
+        <label>Select Account Type</label>
+        <div style="display: flex; gap: 10px; margin-top: 6px;">
+          <label id="roleUserLabel" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 8px; border: 1.5px solid var(--accent); cursor: pointer; background: rgba(47, 111, 237, 0.15); font-size: 13.5px; font-weight: 600; color: #fff; transition: all 0.2s;">
+            <input type="radio" name="regRole" value="user" checked onchange="toggleOrgIdField()" style="accent-color: var(--accent);">
+            👤 Customer
+          </label>
+          <label id="roleAdminLabel" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 8px; border: 1.5px solid var(--border); cursor: pointer; background: rgba(255, 255, 255, 0.05); font-size: 13.5px; font-weight: 600; color: var(--muted); transition: all 0.2s;">
+            <input type="radio" name="regRole" value="admin" onchange="toggleOrgIdField()" style="accent-color: var(--accent);">
+            ⚡ System Admin
+          </label>
+        </div>
+      </div>
+
+      <!-- Admin Organisation ID (Required for Admin) -->
+      <div class="form-group hidden" id="orgIdGroup">
+        <label for="regOrgId">Organisation ID Number <span style="color: #ef4444; font-size: 11px;">(Required for Admin)</span></label>
+        <div class="input-wrapper">
+          <input type="text" id="regOrgId" placeholder="e.g. sap167 (6 characters)" autocomplete="off" maxlength="6">
+        </div>
+        <div style="font-size: 11.5px; color: var(--muted); margin-top: 4px;">Enter your 6-character Admin Organisation ID (sap167).</div>
+      </div>
+
       <div class="form-group">
         <label for="regFullName">Full Name</label>
         <div class="input-wrapper">
@@ -469,6 +493,35 @@
       }
     }
 
+    function toggleOrgIdField() {
+      const role = document.querySelector('input[name="regRole"]:checked')?.value || 'user';
+      const orgGroup = document.getElementById('orgIdGroup');
+      const orgInput = document.getElementById('regOrgId');
+      const userLabel = document.getElementById('roleUserLabel');
+      const adminLabel = document.getElementById('roleAdminLabel');
+
+      if (role === 'admin') {
+        orgGroup.classList.remove('hidden');
+        orgInput.required = true;
+        adminLabel.style.borderColor = 'var(--accent)';
+        adminLabel.style.background = 'rgba(47, 111, 237, 0.15)';
+        adminLabel.style.color = '#fff';
+        userLabel.style.borderColor = 'var(--border)';
+        userLabel.style.background = 'rgba(255, 255, 255, 0.05)';
+        userLabel.style.color = 'var(--muted)';
+      } else {
+        orgGroup.classList.add('hidden');
+        orgInput.required = false;
+        orgInput.value = '';
+        userLabel.style.borderColor = 'var(--accent)';
+        userLabel.style.background = 'rgba(47, 111, 237, 0.15)';
+        userLabel.style.color = '#fff';
+        adminLabel.style.borderColor = 'var(--border)';
+        adminLabel.style.background = 'rgba(255, 255, 255, 0.05)';
+        adminLabel.style.color = 'var(--muted)';
+      }
+    }
+
     function togglePasswordVisibility(inputId) {
       const pwdInput = document.getElementById(inputId);
       if (pwdInput.type === 'password') {
@@ -540,6 +593,8 @@
 
     async function handleRegister(e) {
       e.preventDefault();
+      const role = document.querySelector('input[name="regRole"]:checked')?.value || 'user';
+      const orgId = document.getElementById('regOrgId').value.trim();
       const fullName = document.getElementById('regFullName').value.trim();
       const email = document.getElementById('regEmail').value.trim();
       const password = document.getElementById('regPassword').value;
@@ -549,6 +604,19 @@
       const spinner = document.getElementById('regSpinner');
       const btnText = document.getElementById('regBtnText');
       const btn = document.getElementById('regBtn');
+
+      if (role === 'admin') {
+        if (!orgId) {
+          errorMsg.innerText = 'Organisation ID is required for System Admin registration.';
+          errorMsg.style.display = 'block';
+          return;
+        }
+        if (orgId.toLowerCase() !== 'sap167') {
+          errorMsg.innerText = 'Invalid Organisation ID. Only authorized administrators with Organisation ID (sap167) can register as Admin.';
+          errorMsg.style.display = 'block';
+          return;
+        }
+      }
 
       if (password !== confirmPwd) {
         errorMsg.innerText = 'Passwords do not match. Please verify.';
@@ -571,7 +639,7 @@
         const response = await fetch(`${API_BASE}/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ full_name: fullName, email: email, password: password })
+          body: JSON.stringify({ full_name: fullName, email: email, password: password, role: role, org_id: orgId })
         });
 
         const data = await response.json();
