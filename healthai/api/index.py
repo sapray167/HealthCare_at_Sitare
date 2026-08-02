@@ -1,10 +1,11 @@
 import os
 import sys
-import json
 from pathlib import Path
 
-# Ensure backend directory is in python path
-sys.path.insert(0, str(Path(__file__).parent))
+BASE_DIR = Path(__file__).resolve().parent.parent
+BACKEND_DIR = BASE_DIR / "backend"
+
+sys.path.insert(0, str(BACKEND_DIR))
 
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,8 +29,7 @@ from emailer import send_missing_fields_email
 
 app = FastAPI(title="Healthcare Admin AI")
 
-UPLOAD_DIR = Path(__file__).parent / "uploads"
-UPLOAD_DIR.mkdir(exist_ok=True)
+from storage import upload_file_to_storage, download_file_from_storage
 
 
 class LoginRequest(BaseModel):
@@ -60,7 +60,7 @@ app.add_middleware(
 init_db()
 
 
-@app.post("/register")
+@app.post("/api/register")
 def register(req: RegisterRequest):
     if not req.full_name or len(req.full_name.strip()) < 2:
         raise HTTPException(status_code=400, detail="Please provide your full name.")
@@ -81,7 +81,7 @@ def register(req: RegisterRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.post("/login")
+@app.post("/api/login")
 def login(req: LoginRequest):
     try:
         if not req.email or "@" not in req.email:
@@ -109,7 +109,7 @@ def login(req: LoginRequest):
         raise HTTPException(status_code=500, detail=f"Authentication error: {str(e)}")
 
 
-@app.get("/form-types")
+@app.get("/api/form-types")
 def form_types():
     """So the frontend can build the dropdown + labels dynamically."""
     return {
@@ -118,7 +118,7 @@ def form_types():
     }
 
 
-@app.post("/customer-upload")
+@app.post("/api/customer-upload")
 async def customer_upload(file: UploadFile = File(...), form_type: str = Form(...), user_email: str = Form(...)):
     try:
         get_schema(form_type)
@@ -126,35 +126,36 @@ async def customer_upload(file: UploadFile = File(...), form_type: str = Form(..
         raise HTTPException(status_code=400, detail=str(e))
 
     file_bytes = await file.read()
-    if not file_bytes:
-        raise HTTPException(status_code=400, detail="Empty file uploaded.")
 
-    safe_filename = f"{int(time.time())}_{file.filename.replace(' ', '_')}"
-    saved_path = UPLOAD_DIR / safe_filename
-    with open(saved_path, "wb") as f:
-        f.write(file_bytes)
+    storage_path = upload_file_to_storage(
+        file_bytes=file_bytes,
+        filename=file.filename,
+        user_email=user_email
+    )
 
-    record_id = insert_pending_record(form_type, file.filename, str(saved_path), user_email)
-    return {
-        "status": "success",
-        "record_id": record_id,
-        "filename": file.filename,
-        "message": "Document uploaded successfully! Your document is pending Admin review & extraction."
-    }
+    record_id = insert_pending_record(
+        form_type,
+        file.filename,
+        storage_path,
+        user_email
+    )
 
 
-@app.post("/extract-record/{record_id}")
+@app.post("/api/extract-record/{record_id}")
 async def extract_record(record_id: int):
     rec = get_record(record_id)
     if not rec:
         raise HTTPException(status_code=404, detail="Record not found.")
 
-    file_path_str = rec.get("file_path")
-    if not file_path_str or not Path(file_path_str).exists():
-        raise HTTPException(status_code=400, detail="Source document file not found for this record.")
+    storage_path = rec.get("file_path")
 
-    file_path = Path(file_path_str)
-    file_bytes = file_path.read_bytes()
+    if not storage_path:
+        raise HTTPException(
+            status_code=400,
+            detail="Document path missing."
+        )
+
+    file_bytes = download_file_from_storage(storage_path)
 
     try:
         result = extract_fields(file_bytes, rec.get("filename") or file_path.name, rec["form_type"])
@@ -174,7 +175,7 @@ async def extract_record(record_id: int):
     return result
 
 
-@app.post("/extract")
+@app.post("/api/extract")
 async def extract(file: UploadFile = File(...), form_type: str = Form(...), user_email: str = Form("dr.smith@health.ai")):
     try:
         get_schema(form_type)
@@ -185,10 +186,11 @@ async def extract(file: UploadFile = File(...), form_type: str = Form(...), user
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Empty file uploaded.")
 
-    safe_filename = f"{int(time.time())}_{file.filename.replace(' ', '_')}"
-    saved_path = UPLOAD_DIR / safe_filename
-    with open(saved_path, "wb") as f:
-        f.write(file_bytes)
+    storage_path = upload_file_to_storage(
+        file_bytes=file_bytes,
+        filename=file.filename,
+        user_email=user_email
+    )
 
     try:
         result = extract_fields(file_bytes, file.filename, form_type)
@@ -213,7 +215,7 @@ async def extract(file: UploadFile = File(...), form_type: str = Form(...), user
 
 
 
-@app.post("/generate", response_class=PlainTextResponse)
+@app.post("/api/generate", response_class=PlainTextResponse)
 async def generate(form_type: str = Form(...), fields_json: str = Form(...), record_id: int = Form(None)):
     try:
         fields = json.loads(fields_json)
@@ -231,17 +233,17 @@ async def generate(form_type: str = Form(...), fields_json: str = Form(...), rec
     return draft
 
 
-@app.get("/stats")
+@app.get("/api/stats")
 def stats(user_email: str = None):
     return get_stats(user_email=user_email)
 
 
-@app.get("/records")
+@app.get("/api/records")
 def records(limit: int = 50, user_email: str = None):
     return list_records(limit=limit, user_email=user_email)
 
 
-@app.get("/records/{record_id}")
+@app.get("/api/records/{record_id}")
 def record(record_id: int):
     rec = get_record(record_id)
     if not rec:
@@ -249,7 +251,7 @@ def record(record_id: int):
     return rec
 
 
-@app.get("/platforms")
+@app.get("/api/platforms")
 def platforms():
     return list_platforms()
 
@@ -333,7 +335,7 @@ def missing_details(record_id: int, platform: str = None):
     }
 
 
-@app.post("/send-missing-email")
+@app.post("/api/send-missing-email")
 def send_missing_email(req: SendEmailRequest):
     rec = get_record(req.record_id)
     if not rec:
@@ -367,7 +369,7 @@ def send_missing_email(req: SendEmailRequest):
     return res
 
 
-@app.post("/submit-missing")
+@app.post("/api/submit-missing")
 def submit_missing(req: SubmitMissingRequest):
     rec = get_record(req.record_id)
     if not rec:
@@ -408,15 +410,20 @@ def submit_missing(req: SubmitMissingRequest):
     }
 
 
-@app.get("/health")
+@app.get("/api/health")
 def health():
     return {"status": "ok"}
 
 
-# Serve static frontend files
+# Serve frontend files
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
+
 if FRONTEND_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+    app.mount(
+        "/frontend",
+        StaticFiles(directory=str(FRONTEND_DIR)),
+        name="frontend"
+    )
 
     @app.get("/")
     def read_root():

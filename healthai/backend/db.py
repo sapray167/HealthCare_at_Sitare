@@ -278,6 +278,16 @@ def update_record_draft(record_id: int, draft_text: str):
     except Exception as e:
         print(f"SQLite update_record_draft notice: {e}")
 
+def update_record_file_path(record_id: int, file_path: str):
+    sp = get_supabase()
+
+    if sp:
+        sp.table("records").update(
+            {
+                "file_path": file_path
+            }
+        ).eq("id", record_id).execute()
+
 
 def get_record(record_id: int) -> dict | None:
     sp = get_supabase()
