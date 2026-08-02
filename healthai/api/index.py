@@ -7,7 +7,10 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 BACKEND_DIR = BASE_DIR / "backend"
 
-sys.path.insert(0, str(BACKEND_DIR))
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
 
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,18 +18,32 @@ from fastapi.responses import PlainTextResponse, RedirectResponse, JSONResponse,
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from schemas import FORM_SCHEMAS, get_schema
-from extractor import extract_fields
-from drafter import generate_draft
-from db import (
-    get_supabase,
-    init_db, insert_record, update_record_draft, get_record, list_records,
-    get_stats, create_user, verify_user, save_notification, update_record_merged,
-    insert_pending_record, update_record_extraction, mark_notification_sent
-)
-from contact_guide import detect_platform, get_field_guidance, list_platforms
-from emailer import send_missing_fields_email
-from storage import upload_file_to_storage, download_file_from_storage
+try:
+    from backend.schemas import FORM_SCHEMAS, get_schema
+    from backend.extractor import extract_fields
+    from backend.drafter import generate_draft
+    from backend.db import (
+        get_supabase,
+        init_db, insert_record, update_record_draft, get_record, list_records,
+        get_stats, create_user, verify_user, save_notification, update_record_merged,
+        insert_pending_record, update_record_extraction, mark_notification_sent
+    )
+    from backend.contact_guide import detect_platform, get_field_guidance, list_platforms
+    from backend.emailer import send_missing_fields_email
+    from backend.storage import upload_file_to_storage, download_file_from_storage
+except ImportError:
+    from schemas import FORM_SCHEMAS, get_schema
+    from extractor import extract_fields
+    from drafter import generate_draft
+    from db import (
+        get_supabase,
+        init_db, insert_record, update_record_draft, get_record, list_records,
+        get_stats, create_user, verify_user, save_notification, update_record_merged,
+        insert_pending_record, update_record_extraction, mark_notification_sent
+    )
+    from contact_guide import detect_platform, get_field_guidance, list_platforms
+    from emailer import send_missing_fields_email
+    from storage import upload_file_to_storage, download_file_from_storage
 
 app = FastAPI(title="Healthcare Admin AI")
 
