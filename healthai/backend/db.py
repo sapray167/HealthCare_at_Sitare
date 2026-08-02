@@ -153,6 +153,16 @@ def update_record_draft(record_id: int, draft_text: str):
     if sp:
         sp.table("records").update({"status": "completed", "draft_text": draft_text}).eq("id", record_id).execute()
 
+def update_record_file_path(record_id: int, file_path: str):
+    sp = get_supabase()
+
+    if sp:
+        sp.table("records").update(
+            {
+                "file_path": file_path
+            }
+        ).eq("id", record_id).execute()
+
 
 def get_record(record_id: int) -> dict | None:
     sp = get_supabase()

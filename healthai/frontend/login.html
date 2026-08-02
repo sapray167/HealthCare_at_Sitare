@@ -411,9 +411,9 @@
   function getDashboardUrl(role) {
     const isHttp = window.location.protocol.startsWith('http');
     if (role === 'admin') {
-      return isHttp ? '/static/admin_dashboard.html' : 'admin_dashboard.html';
+      return isHttp ? '/frontend/admin_dashboard.html' : 'admin_dashboard.html';
     }
-    return isHttp ? '/static/customer_dashboard.html' : 'customer_dashboard.html';
+    return isHttp ? '/frontend/customer_dashboard.html' : 'customer_dashboard.html';
   }
 
   // Redirect if valid session exists

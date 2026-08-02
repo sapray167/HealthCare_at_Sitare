@@ -223,7 +223,7 @@
   (function() {
     const sessionStr = localStorage.getItem('healthai_session');
     if (!sessionStr) {
-      window.location.href = window.location.protocol.startsWith('http') ? '/static/login.html' : 'login.html';
+      window.location.href = window.location.protocol.startsWith('http') ? '/frontend/login.html' : 'login.html';
       return;
     }
   })();
@@ -351,7 +351,7 @@ function getSession() {
 
 function handleLogout() {
   localStorage.removeItem('healthai_session');
-  window.location.href = window.location.protocol.startsWith('http') ? '/static/login.html' : 'login.html';
+  window.location.href = window.location.protocol.startsWith('http') ? '/frontend/login.html' : 'login.html';
 }
 
 async function loadSchemas() {
@@ -435,7 +435,7 @@ async function refreshRecords() {
 }
 
 function editDetails(id) {
-  window.location.href = `/static/fill_missing.html?record_id=${id}`;
+  window.location.href = `/frontend/fill_missing.html?record_id=${id}`;
 }
 
 async function viewReport(id) {

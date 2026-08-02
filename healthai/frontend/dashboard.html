@@ -150,18 +150,18 @@
     const sessionStr = localStorage.getItem('healthai_session');
     const isHttp = window.location.protocol.startsWith('http');
     if (!sessionStr) {
-      window.location.href = isHttp ? '/static/login.html' : 'login.html';
+      window.location.href = isHttp ? '/frontend/login.html' : 'login.html';
       return;
     }
     try {
       const session = JSON.parse(sessionStr);
       if (session.role === 'admin') {
-        window.location.href = isHttp ? '/static/admin_dashboard.html' : 'admin_dashboard.html';
+        window.location.href = isHttp ? '/frontend/admin_dashboard.html' : 'admin_dashboard.html';
       } else {
-        window.location.href = isHttp ? '/static/customer_dashboard.html' : 'customer_dashboard.html';
+        window.location.href = isHttp ? '/frontend/customer_dashboard.html' : 'customer_dashboard.html';
       }
     } catch(e) {
-      window.location.href = isHttp ? '/static/login.html' : 'login.html';
+      window.location.href = isHttp ? '/frontend/login.html' : 'login.html';
     }
   })();
 </script>
@@ -356,7 +356,7 @@ async function refreshRecords() {
 }
 
 function editRecord(id) {
-  window.location.href = `/static/fill_missing.html?record_id=${id}`;
+  window.location.href = `/frontend/fill_missing.html?record_id=${id}`;
 }
 
 async function generateReport(id) {
@@ -610,7 +610,7 @@ document.getElementById("generateBtn").addEventListener("click", async () => {
 });
 
 function getLoginUrl() {
-  return window.location.protocol.startsWith('http') ? '/static/login.html' : 'login.html';
+  return window.location.protocol.startsWith('http') ? '/frontend/login.html' : 'login.html';
 }
 
 function handleLogout() {
