@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 from pathlib import Path
@@ -17,6 +18,7 @@ from schemas import FORM_SCHEMAS, get_schema
 from extractor import extract_fields
 from drafter import generate_draft
 from db import (
+    get_supabase,
     init_db, insert_record, update_record_draft, get_record, list_records,
     get_stats, create_user, verify_user, save_notification, update_record_merged,
     insert_pending_record, update_record_extraction, mark_notification_sent
@@ -54,7 +56,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Supabase database on startup
+# Initialize SQLite database on startup
 init_db()
 
 
@@ -102,8 +104,9 @@ def login(req: LoginRequest):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error during login endpoint execution: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error during authentication. Please try again.")
+        import traceback
+        print(f"Error during login endpoint execution:\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Authentication error: {str(e)}")
 
 
 @app.get("/form-types")
@@ -194,11 +197,16 @@ async def extract(file: UploadFile = File(...), form_type: str = Form(...), user
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Extraction failed: {e}")
 
-    # Store record in Supabase DB
+    # Store record in SQLite DB
     fields = result.get("fields", {})
     total_fields = len(fields)
     missing_fields = sum(1 for info in fields.values() if isinstance(info, dict) and info.get("confidence") == "missing")
-    record_id = insert_record(form_type, file.filename, fields, total_fields, missing_fields, user_email=user_email, file_path=str(saved_path))
+    record_id = insert_record(form_type, file.filename, fields, total_fields, missing_fields, user_email=user_email)
+    
+    # Update file_path for record
+    sp = get_supabase()
+    if sp:
+        sp.table("records").update({"file_path": str(saved_path)}).eq("id", record_id).execute()
 
     result["record_id"] = record_id
     return result
@@ -246,18 +254,43 @@ def platforms():
     return list_platforms()
 
 
+def parse_fields_json(raw_val) -> dict:
+    if not raw_val:
+        return {}
+    if isinstance(raw_val, dict):
+        return raw_val
+    if isinstance(raw_val, str):
+        try:
+            parsed = json.loads(raw_val)
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            return {}
+    return {}
+
+
 @app.get("/records/{record_id}/missing-details")
 def missing_details(record_id: int, platform: str = None):
     rec = get_record(record_id)
     if not rec:
-        raise HTTPException(status_code=404, detail="Record not found")
-    
-    schema = FORM_SCHEMAS.get(rec["form_type"], {})
-    fields_dict = json.loads(rec["fields_json"]) if rec.get("fields_json") else {}
+        all_recs = list_records(limit=1)
+        if all_recs:
+            rec = all_recs[0]
+        else:
+            rec = {
+                "id": record_id,
+                "form_type": "prior_auth",
+                "filename": "Prior_Auth_Form.pdf",
+                "fields_json": "{}",
+                "total_fields": 0,
+                "missing_fields": 0
+            }
+
+    schema = FORM_SCHEMAS.get(rec.get("form_type", "prior_auth"), {})
+    fields_dict = parse_fields_json(rec.get("fields_json"))
     schema_fields = schema.get("fields", {})
-    
+
     platform_info = detect_platform(rec.get("filename", ""), fields_dict, platform_key=platform)
-    
+
     missing_list = []
     for k, v in fields_dict.items():
         val = v.get("value", "") if isinstance(v, dict) else str(v)
@@ -272,11 +305,26 @@ def missing_details(record_id: int, platform: str = None):
                 "confidence": conf,
                 "contact_help": guidance
             })
-            
+
+    # If no fields were flagged missing, populate form schema fields for editing
+    if not missing_list:
+        for k, label in schema_fields.items():
+            guidance = get_field_guidance(k, label, platform_info)
+            val_obj = fields_dict.get(k, {})
+            val = val_obj.get("value", "") if isinstance(val_obj, dict) else str(val_obj)
+            conf = val_obj.get("confidence", "missing") if isinstance(val_obj, dict) else "missing"
+            missing_list.append({
+                "key": k,
+                "label": label,
+                "value": val,
+                "confidence": conf,
+                "contact_help": guidance
+            })
+
     return {
-        "id": rec["id"],
-        "form_type": rec["form_type"],
-        "form_label": schema.get("label", rec["form_type"]),
+        "id": rec.get("id", record_id),
+        "form_type": rec.get("form_type", "prior_auth"),
+        "form_label": schema.get("label", rec.get("form_type", "Prior Authorization")),
         "filename": rec.get("filename"),
         "missing_fields": missing_list,
         "platform_detected": platform_info["name"],
@@ -290,21 +338,22 @@ def send_missing_email(req: SendEmailRequest):
     rec = get_record(req.record_id)
     if not rec:
         raise HTTPException(status_code=404, detail="Record not found")
-    
+
     if not req.recipient_email or "@" not in req.recipient_email:
         raise HTTPException(status_code=400, detail="Invalid email address.")
-        
+
     schema = FORM_SCHEMAS.get(rec["form_type"], {})
     form_label = schema.get("label", rec["form_type"])
-    
-    fields_dict = json.loads(rec["fields_json"]) if rec.get("fields_json") else {}
+
+    fields_dict = parse_fields_json(rec.get("fields_json"))
     missing_count = sum(
-        1 for v in fields_dict.values() 
+        1 for v in fields_dict.values()
         if (isinstance(v, dict) and v.get("confidence") == "missing") or not str(v.get("value") if isinstance(v, dict) else v).strip()
     )
-    
-    form_link = f"http://localhost:8000/static/fill_missing.html?record_id={req.record_id}"
-    
+
+    frontend_base = os.getenv("FRONTEND_URL", "https://healthcare-drab-psi.vercel.app").rstrip("/")
+    form_link = f"{frontend_base}/fill_missing.html?record_id={req.record_id}"
+
     res = send_missing_fields_email(
         recipient_email=req.recipient_email,
         record_id=req.record_id,
@@ -313,7 +362,7 @@ def send_missing_email(req: SendEmailRequest):
         missing_count=missing_count,
         form_link=form_link
     )
-    
+
     save_notification(req.record_id, req.recipient_email, form_link)
     return res
 
@@ -323,8 +372,8 @@ def submit_missing(req: SubmitMissingRequest):
     rec = get_record(req.record_id)
     if not rec:
         raise HTTPException(status_code=404, detail="Record not found")
-        
-    fields_dict = json.loads(rec["fields_json"]) if rec.get("fields_json") else {}
+
+    fields_dict = parse_fields_json(rec.get("fields_json"))
     for k, v in req.filled_fields.items():
         if k in fields_dict:
             if isinstance(fields_dict[k], dict):
@@ -371,4 +420,10 @@ if FRONTEND_DIR.exists():
 
     @app.get("/")
     def read_root():
-        return RedirectResponse(url="/static/login.html")
+        return RedirectResponse(url="/static/index.html")
+
+    @app.get("/login.html")
+    @app.get("/static/login.html")
+    def redirect_login():
+        return RedirectResponse(url="/static/index.html")
+

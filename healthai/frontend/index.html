@@ -1,302 +1,614 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<title>Healthcare Admin AI — Demo</title>
-<style>
-  :root {
-    --ink: #16213a;
-    --muted: #6b7688;
-    --line: #e3e7ee;
-    --accent: #2f6fed;
-    --accent-soft: #eaf1ff;
-    --high: #1e9e6d;
-    --medium: #d99a1b;
-    --low: #e0672c;
-    --missing: #d9455f;
-    --bg: #f6f8fb;
-  }
-  * { box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Arial, sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    margin: 0;
-    padding: 32px 20px 80px;
-  }
-  .wrap { max-width: 880px; margin: 0 auto; }
-  h1 { font-size: 22px; margin-bottom: 4px; }
-  .sub { color: var(--muted); margin-bottom: 28px; font-size: 14px; }
-  .card {
-    background: #fff;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 20px;
-  }
-  .card h2 { font-size: 15px; margin: 0 0 16px; color: var(--ink); }
-  label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
-  select, input[type=file] {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    font-size: 14px;
-    background: #fff;
-  }
-  .row { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
-  .row > div { flex: 1; min-width: 220px; }
-  button {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    padding: 11px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  button:disabled { background: #b9c6dd; cursor: not-allowed; }
-  button.secondary { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
-  .field {
-    display: grid;
-    grid-template-columns: 220px 1fr 90px;
-    gap: 10px;
-    align-items: center;
-    padding: 9px 0;
-    border-bottom: 1px solid var(--line);
-  }
-  .field:last-child { border-bottom: none; }
-  .field label { margin: 0; font-size: 13px; color: var(--ink); }
-  .field input {
-    padding: 8px 10px;
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    font-size: 13px;
-    width: 100%;
-  }
-  .badge {
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 20px;
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: .3px;
-  }
-  .badge.high { background: #e5f7ee; color: var(--high); }
-  .badge.medium { background: #fdf3de; color: var(--medium); }
-  .badge.low { background: #fdeee5; color: var(--low); }
-  .badge.missing { background: #fce6ea; color: var(--missing); }
-  .missing input { border-color: var(--missing); background: #fff8f9; }
-  .notes {
-    font-size: 13px;
-    color: var(--muted);
-    background: var(--accent-soft);
-    padding: 12px 14px;
-    border-radius: 8px;
-    margin-top: 14px;
-  }
-  .stat-row { display: flex; gap: 20px; margin-top: 14px; flex-wrap: wrap; }
-  .stat { font-size: 13px; color: var(--muted); }
-  .stat b { color: var(--ink); font-size: 18px; display: block; }
-  pre#draftOut {
-    white-space: pre-wrap;
-    background: #fbfbfd;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 18px;
-    font-size: 13px;
-    line-height: 1.6;
-  }
-  .actions { display: flex; gap: 10px; margin-top: 16px; }
-  .hidden { display: none; }
-  .spinner { font-size: 13px; color: var(--muted); }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Healthcare Admin AI — Sign In & Account Registration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0b1120;
+      --card-bg: rgba(22, 33, 58, 0.85);
+      --card-border: rgba(255, 255, 255, 0.12);
+      --accent: #2f6fed;
+      --accent-hover: #1e5cd8;
+      --accent-glow: rgba(47, 111, 237, 0.35);
+      --ink: #f1f5f9;
+      --muted: #94a3b8;
+      --line: #334155;
+      --error: #f43f5e;
+      --success: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 50% 20%, #162447 0%, #0b1120 70%);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .bg-glow {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(47, 111, 237, 0.18) 0%, rgba(0, 0, 0, 0) 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .auth-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 440px;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 38px 36px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 35px var(--accent-glow);
+      transition: transform 0.3s ease;
+    }
+
+    .brand-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .brand-icon {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, var(--accent), #60a5fa);
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 18px rgba(47, 111, 237, 0.35);
+      margin-bottom: 12px;
+    }
+
+    .brand-icon svg {
+      width: 28px;
+      height: 28px;
+      fill: #fff;
+    }
+
+    .brand-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    .brand-header p {
+      font-size: 13.5px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* Nav Tabs */
+    .auth-tabs {
+      display: flex;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 26px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 10px 0;
+      font-size: 13.5px;
+      font-weight: 600;
+      font-family: inherit;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(47, 111, 237, 0.3);
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink);
+      margin-bottom: 7px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-wrapper input {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 14.5px;
+      color: #fff;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-wrapper input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.25);
+    }
+
+    .toggle-pwd {
+      position: absolute;
+      right: 14px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12.5px;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+
+    .toggle-pwd:hover {
+      color: #fff;
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--accent);
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      padding: 13px;
+      font-size: 14.5px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(47, 111, 237, 0.35);
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+      margin-top: 22px;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 6px 18px rgba(47, 111, 237, 0.45);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.99);
+    }
+
+    .error-msg {
+      color: var(--error);
+      font-size: 12.5px;
+      margin-top: 8px;
+      display: none;
+      background: rgba(244, 63, 94, 0.1);
+      border: 1px solid rgba(244, 63, 94, 0.25);
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    .success-msg {
+      color: var(--success);
+      font-size: 12.5px;
+      margin-top: 8px;
+      display: none;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    .demo-hint {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: center;
+    }
+
+    .demo-hint p {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .demo-chip {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    .demo-chip:hover {
+      background: rgba(47, 111, 237, 0.2);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .toggle-footer {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .toggle-footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .toggle-footer a:hover {
+      text-decoration: underline;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 0.8s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
+
 <body>
-<div class="wrap">
-  <h1>Healthcare Admin AI</h1>
-  <div class="sub">Upload a form → review extracted fields → generate the outgoing paperwork. Human reviews everything before it goes anywhere.</div>
 
-  <div class="card">
-    <h2>1. Upload a form</h2>
-    <div class="row">
-      <div>
-        <label for="formType">Form type</label>
-        <select id="formType">
-          <option value="prior_authorization">Prior Authorization Request</option>
-          <option value="insurance_claim">Insurance Claim Submission</option>
-        </select>
+  <div class="bg-glow"></div>
+
+  <div class="auth-card">
+    <div class="brand-header">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
+        </svg>
       </div>
-      <div>
-        <label for="fileInput">Document (PDF, PNG, or JPG)</label>
-        <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.webp">
+      <h1>Healthcare Admin AI</h1>
+      <p id="subTitle">Sign in to access your administrative dashboard</p>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="tab-btn active" id="loginTabBtn" onclick="switchTab('login')">Sign In</button>
+      <button class="tab-btn" id="registerTabBtn" onclick="switchTab('register')">Create Account</button>
+    </div>
+
+    <!-- SIGN IN FORM -->
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label for="loginEmail">Email Address</label>
+        <div class="input-wrapper">
+          <input type="email" id="loginEmail" placeholder="dr.smith@health.ai" required autocomplete="email">
+        </div>
       </div>
-    </div>
-    <button id="extractBtn">Extract fields</button>
-    <span class="spinner hidden" id="extractSpinner">Reading document…</span>
+
+      <div class="form-group">
+        <label for="loginPassword">Password</label>
+        <div class="input-wrapper">
+          <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+          <button type="button" class="toggle-pwd" onclick="togglePasswordVisibility('loginPassword')">Show</button>
+        </div>
+      </div>
+
+      <div class="error-msg" id="loginErrorMsg"></div>
+
+      <button type="submit" class="btn-primary" id="loginBtn">
+        <div class="spinner" id="loginSpinner"></div>
+        <span id="loginBtnText">Sign In</span>
+      </button>
+
+      <div class="demo-hint">
+        <p>Quick Demo Portals:</p>
+        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+          <span class="demo-chip" onclick="fillDemo('dr.smith@health.ai', 'demo1234')">👤 Customer (Dr. Smith)</span>
+          <span class="demo-chip" style="border-color: rgba(47, 111, 237, 0.4); background: rgba(47, 111, 237, 0.15);"
+            onclick="fillDemo('admin@health.ai', 'admin1234')">⚡ System Admin</span>
+        </div>
+      </div>
+
+      <div class="toggle-footer">
+        Don't have an account? <a onclick="switchTab('register')">Register here</a>
+      </div>
+    </form>
+
+    <!-- REGISTER FORM -->
+    <form id="registerForm" class="hidden" onsubmit="handleRegister(event)">
+      <div class="form-group">
+        <label for="regFullName">Full Name</label>
+        <div class="input-wrapper">
+          <input type="text" id="regFullName" placeholder="Dr. Jane Smith" required autocomplete="name">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="regEmail">Email Address</label>
+        <div class="input-wrapper">
+          <input type="email" id="regEmail" placeholder="name@healthcare.org" required autocomplete="email">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="regPassword">Password</label>
+        <div class="input-wrapper">
+          <input type="password" id="regPassword" placeholder="Minimum 4 characters" required
+            autocomplete="new-password">
+          <button type="button" class="toggle-pwd" onclick="togglePasswordVisibility('regPassword')">Show</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="regConfirmPassword">Confirm Password</label>
+        <div class="input-wrapper">
+          <input type="password" id="regConfirmPassword" placeholder="Re-enter password" required
+            autocomplete="new-password">
+        </div>
+      </div>
+
+      <div class="error-msg" id="regErrorMsg"></div>
+      <div class="success-msg" id="regSuccessMsg"></div>
+
+      <button type="submit" class="btn-primary" id="regBtn">
+        <div class="spinner" id="regSpinner"></div>
+        <span id="regBtnText">Create Account</span>
+      </button>
+
+      <div class="toggle-footer">
+        Already have an account? <a onclick="switchTab('login')">Sign in here</a>
+      </div>
+    </form>
   </div>
 
-  <div class="card hidden" id="reviewCard">
-    <h2>2. Review &amp; correct</h2>
-    <div id="fieldsContainer"></div>
-    <div class="notes hidden" id="notesBox"></div>
-    <div class="stat-row">
-      <div class="stat"><b id="statTotal">0</b>fields extracted</div>
-      <div class="stat"><b id="statMissing">0</b>need attention</div>
-    </div>
-    <div class="actions">
-      <button id="generateBtn">Generate draft paperwork</button>
-    </div>
-  </div>
+  <script>
+    // Determine backend base URL safely across local and production hosts
+    const API_BASE = (function () {
+      if (window.CUSTOM_API_BASE) return window.CUSTOM_API_BASE;
+      const host = window.location.hostname;
+      const protocol = window.location.protocol;
+      if (host === 'localhost' || host === '127.0.0.1' || protocol === 'file:') {
+        return 'http://localhost:8000';
+      }
+      if (host.includes('onrender.com')) {
+        return window.location.origin;
+      }
+      return 'https://healthcare-lscz.onrender.com';
+    })();
 
-  <div class="card hidden" id="draftCard">
-    <h2>3. Drafted outgoing document</h2>
-    <pre id="draftOut"></pre>
-    <div class="actions">
-      <button class="secondary" id="downloadBtn">Download .txt</button>
-    </div>
-  </div>
-</div>
-
-<script>
-const API_BASE = "http://localhost:8000";
-let currentSchema = null;
-let currentFormType = null;
-
-async function loadSchemas() {
-  const res = await fetch(`${API_BASE}/form-types`);
-  return res.json();
-}
-
-let SCHEMAS = {};
-loadSchemas().then(s => SCHEMAS = s).catch(() => {
-  console.warn("Could not reach backend at " + API_BASE + " — make sure it's running.");
-});
-
-document.getElementById("extractBtn").addEventListener("click", async () => {
-  const fileInput = document.getElementById("fileInput");
-  const formType = document.getElementById("formType").value;
-  if (!fileInput.files.length) { alert("Choose a file first."); return; }
-
-  currentFormType = formType;
-  currentSchema = SCHEMAS[formType];
-
-  const btn = document.getElementById("extractBtn");
-  const spinner = document.getElementById("extractSpinner");
-  btn.disabled = true;
-  spinner.classList.remove("hidden");
-
-  const fd = new FormData();
-  fd.append("file", fileInput.files[0]);
-  fd.append("form_type", formType);
-
-  try {
-    const res = await fetch(`${API_BASE}/extract`, { method: "POST", body: fd });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || "Extraction failed");
+    // Get destination dashboard URL based on role
+    function getDashboardUrl(role) {
+      return role === 'admin' ? 'admin_dashboard.html' : 'customer_dashboard.html';
     }
-    const data = await res.json();
-    renderFields(data);
-  } catch (e) {
-    alert("Error: " + e.message);
-  } finally {
-    btn.disabled = false;
-    spinner.classList.add("hidden");
-  }
-});
 
-function renderFields(data) {
-  const container = document.getElementById("fieldsContainer");
-  container.innerHTML = "";
-  const labels = currentSchema ? currentSchema.fields : {};
-  let missingCount = 0;
-  let total = 0;
+    // Redirect if valid session exists
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        const sessionStr = localStorage.getItem('healthai_session');
+        if (sessionStr) {
+          const session = JSON.parse(sessionStr);
+          window.location.href = getDashboardUrl(session.role);
+        }
+      } catch (e) { }
+    });
 
-  for (const [key, info] of Object.entries(data.fields || {})) {
-    total++;
-    const conf = info.confidence || "missing";
-    if (conf === "missing") missingCount++;
+    function switchTab(tab) {
+      const loginForm = document.getElementById('loginForm');
+      const registerForm = document.getElementById('registerForm');
+      const loginTabBtn = document.getElementById('loginTabBtn');
+      const registerTabBtn = document.getElementById('registerTabBtn');
+      const subTitle = document.getElementById('subTitle');
 
-    const row = document.createElement("div");
-    row.className = "field" + (conf === "missing" ? " missing" : "");
+      document.getElementById('loginErrorMsg').style.display = 'none';
+      document.getElementById('regErrorMsg').style.display = 'none';
+      document.getElementById('regSuccessMsg').style.display = 'none';
 
-    const label = document.createElement("label");
-    label.textContent = labels[key] || key;
-
-    const input = document.createElement("input");
-    input.type = "text";
-    input.value = info.value || "";
-    input.dataset.key = key;
-
-    const badge = document.createElement("span");
-    badge.className = "badge " + conf;
-    badge.textContent = conf;
-
-    row.appendChild(label);
-    row.appendChild(input);
-    row.appendChild(badge);
-    container.appendChild(row);
-  }
-
-  document.getElementById("statTotal").textContent = total;
-  document.getElementById("statMissing").textContent = missingCount;
-
-  const notesBox = document.getElementById("notesBox");
-  if (data.notes) {
-    notesBox.textContent = "Note: " + data.notes;
-    notesBox.classList.remove("hidden");
-  } else {
-    notesBox.classList.add("hidden");
-  }
-
-  document.getElementById("reviewCard").classList.remove("hidden");
-  document.getElementById("draftCard").classList.add("hidden");
-}
-
-document.getElementById("generateBtn").addEventListener("click", async () => {
-  const inputs = document.querySelectorAll("#fieldsContainer input");
-  const fields = {};
-  inputs.forEach(inp => { fields[inp.dataset.key] = inp.value; });
-
-  const fd = new FormData();
-  fd.append("form_type", currentFormType);
-  fd.append("fields_json", JSON.stringify(fields));
-
-  const btn = document.getElementById("generateBtn");
-  btn.disabled = true;
-  btn.textContent = "Generating…";
-
-  try {
-    const res = await fetch(`${API_BASE}/generate`, { method: "POST", body: fd });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || "Generation failed");
+      if (tab === 'login') {
+        loginForm.classList.remove('hidden');
+        registerForm.classList.add('hidden');
+        loginTabBtn.classList.add('active');
+        registerTabBtn.classList.remove('active');
+        subTitle.innerText = 'Sign in to access your administrative dashboard';
+      } else {
+        loginForm.classList.add('hidden');
+        registerForm.classList.remove('hidden');
+        registerTabBtn.classList.add('active');
+        loginTabBtn.classList.remove('active');
+        subTitle.innerText = 'Create a new account for future access';
+      }
     }
-    const text = await res.text();
-    document.getElementById("draftOut").textContent = text;
-    document.getElementById("draftCard").classList.remove("hidden");
-    document.getElementById("draftCard").scrollIntoView({ behavior: "smooth" });
-  } catch (e) {
-    alert("Error: " + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "Generate draft paperwork";
-  }
-});
 
-document.getElementById("downloadBtn").addEventListener("click", () => {
-  const text = document.getElementById("draftOut").textContent;
-  const blob = new Blob([text], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${currentFormType || "draft"}_output.txt`;
-  a.click();
-  URL.revokeObjectURL(url);
-});
-</script>
+    function togglePasswordVisibility(inputId) {
+      const pwdInput = document.getElementById(inputId);
+      if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+      } else {
+        pwdInput.type = 'password';
+      }
+    }
+
+    function fillDemo(email, pwd) {
+      switchTab('login');
+      document.getElementById('loginEmail').value = email;
+      document.getElementById('loginPassword').value = pwd;
+      handleLogin(new Event('submit'));
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const errorMsg = document.getElementById('loginErrorMsg');
+      const spinner = document.getElementById('loginSpinner');
+      const btnText = document.getElementById('loginBtnText');
+      const btn = document.getElementById('loginBtn');
+
+      if (!email || !password) {
+        errorMsg.innerText = 'Please enter both email and password.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+      errorMsg.style.display = 'none';
+
+      spinner.style.display = 'block';
+      btnText.innerText = 'Authenticating...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(`${API_BASE}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, password: password })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.detail || 'Invalid email or password.');
+        }
+
+        const sessionData = {
+          email: data.email || email,
+          full_name: data.full_name || email.split('@')[0],
+          role: data.role || 'user',
+          loggedInAt: new Date().toISOString(),
+          token: data.token || 'demo_token'
+        };
+        localStorage.setItem('healthai_session', JSON.stringify(sessionData));
+
+        setTimeout(() => {
+          window.location.href = getDashboardUrl(sessionData.role);
+        }, 300);
+      } catch (err) {
+        spinner.style.display = 'none';
+        btnText.innerText = 'Sign In';
+        btn.disabled = false;
+        errorMsg.innerText = err.message || 'Error signing in. Please check your credentials.';
+        errorMsg.style.display = 'block';
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const fullName = document.getElementById('regFullName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const confirmPwd = document.getElementById('regConfirmPassword').value;
+      const errorMsg = document.getElementById('regErrorMsg');
+      const successMsg = document.getElementById('regSuccessMsg');
+      const spinner = document.getElementById('regSpinner');
+      const btnText = document.getElementById('regBtnText');
+      const btn = document.getElementById('regBtn');
+
+      if (password !== confirmPwd) {
+        errorMsg.innerText = 'Passwords do not match. Please verify.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+      if (password.length < 4) {
+        errorMsg.innerText = 'Password must be at least 4 characters.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      errorMsg.style.display = 'none';
+      successMsg.style.display = 'none';
+      spinner.style.display = 'block';
+      btnText.innerText = 'Creating Account...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(`${API_BASE}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ full_name: fullName, email: email, password: password })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.detail || 'Registration failed.');
+        }
+
+        successMsg.innerText = 'Account created successfully! Logging you in...';
+        successMsg.style.display = 'block';
+
+        // Auto login after registration
+        const sessionData = {
+          email: data.user.email,
+          full_name: data.user.full_name,
+          role: data.user.role || 'user',
+          loggedInAt: new Date().toISOString(),
+          token: data.token
+        };
+        localStorage.setItem('healthai_session', JSON.stringify(sessionData));
+
+        setTimeout(() => {
+          window.location.href = getDashboardUrl(sessionData.role);
+        }, 700);
+
+      } catch (err) {
+        spinner.style.display = 'none';
+        btnText.innerText = 'Create Account';
+        btn.disabled = false;
+        errorMsg.innerText = err.message || 'Could not complete registration. Try another email.';
+        errorMsg.style.display = 'block';
+      }
+    }
+  </script>
+
 </body>
+
 </html>

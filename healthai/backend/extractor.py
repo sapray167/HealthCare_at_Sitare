@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+import re
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -10,6 +11,23 @@ from schemas import get_schema
 
 # Load environment variables from .env file if present
 load_dotenv()
+
+PREFERRED_MODELS = [
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-2.5-pro",
+    "gemini-1.5-pro"
+]
+
+MEDIA_TYPES = {
+    ".pdf": "application/pdf",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+}
+
 
 def _configure_genai():
     env_path = Path(__file__).parent / ".env"
@@ -21,17 +39,6 @@ def _configure_genai():
     if not api_key:
         raise ValueError("Gemini API key is missing. Please create a .env file in the backend folder with GEMINI_API_KEY=your_key or set the GEMINI_API_KEY environment variable.")
     genai.configure(api_key=api_key)
-
-
-MODEL = "gemini-3.5-flash"
-
-MEDIA_TYPES = {
-    ".pdf": "application/pdf",
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".webp": "image/webp",
-}
 
 
 def _media_type(filename: str) -> str:
@@ -53,7 +60,7 @@ Extract the following fields from the document:
 
 Required fields (flag clearly if missing): {required}
 
-Return ONLY a JSON object, no other text, no markdown fences, in exactly this shape:
+Return ONLY valid JSON (RFC 8259), no other text, no markdown fences, in exactly this shape:
 {{
   "fields": {{
     "<field_key>": {{
@@ -71,39 +78,135 @@ Rules:
 - Use "low" confidence for fields you extracted but are genuinely unsure about (unclear handwriting, ambiguous formatting).
 - Never guess or fabricate a value — if it's not in the document, mark it missing.
 - "missing_required" must list every required field above that ended up with confidence "missing".
-- Output raw JSON only."""
+- ESCAPE all double quotes inside JSON string values using \\".
+- Do not output raw unescaped newlines inside string values.
+- Output raw valid JSON only."""
+
+
+def _clean_raw_text(text: str) -> str:
+    text = text.strip()
+    
+    # Extract JSON contents inside markdown code fences if present
+    match = re.search(r'```(?:json)?\s*(\{.*\})\s*```', text, re.DOTALL)
+    if match:
+        text = match.group(1).strip()
+    else:
+        # Extract from first { to last }
+        match_obj = re.search(r'\{.*\}', text, re.DOTALL)
+        if match_obj:
+            text = match_obj.group(0).strip()
+
+    # Clean trailing commas before closing brackets/braces
+    text = re.sub(r',\s*([\}\]])', r'\1', text)
+    return text
+
+
+def _repair_and_parse_json(text: str) -> dict:
+    cleaned = _clean_raw_text(text)
+
+    # Attempt 1: Direct JSON parse
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    # Attempt 2: Strict=False (allows unescaped control chars / newlines inside strings)
+    try:
+        return json.loads(cleaned, strict=False)
+    except json.JSONDecodeError:
+        pass
+
+    # Attempt 3: Replace raw newlines inside JSON double-quoted strings
+    try:
+        def fix_newlines(match):
+            val = match.group(0)
+            return val.replace('\n', '\\n').replace('\r', '\\r')
+        fixed_newlines = re.sub(r'"([^"\\]*(\\.[^"\\]*)*)"', fix_newlines, cleaned)
+        return json.loads(fixed_newlines, strict=False)
+    except json.JSONDecodeError:
+        pass
+
+    # Attempt 4: Fix unescaped double quotes inside value strings
+    try:
+        def escape_inner_quotes(match):
+            prefix = match.group(1)
+            content = match.group(2)
+            suffix = match.group(3)
+            clean_content = re.sub(r'(?<!\\)"', r'\"', content)
+            return f'{prefix}{clean_content}{suffix}'
+        fixed_quotes = re.sub(r'(":\s*")([^"\n]*?"[^"\n]*?)("\s*[,\}])', escape_inner_quotes, cleaned)
+        return json.loads(fixed_quotes, strict=False)
+    except json.JSONDecodeError:
+        pass
+
+    # Attempt 5: Regex Fallback Field Extractor
+    fields = {}
+    pattern = r'"([a-zA-Z0-9_]+)"\s*:\s*\{\s*"value"\s*:\s*"([^"]*)"\s*,\s*"confidence"\s*:\s*"([^"]*)"'
+    matches = re.findall(pattern, cleaned)
+    for k, v, c in matches:
+        fields[k] = {"value": v, "confidence": c}
+
+    if fields:
+        return {
+            "fields": fields,
+            "missing_required": [k for k, v in fields.items() if v.get("confidence") == "missing"],
+            "notes": "Extracted with regex recovery parser."
+        }
+
+    raise ValueError(f"Model did not return valid JSON: {text[:300]}")
 
 
 def extract_fields(file_bytes: bytes, filename: str, form_type: str) -> dict:
     _configure_genai()
     media_type = _media_type(filename)
-
     prompt = _build_prompt(form_type)
 
+    response_text = ""
+    last_error = None
+
+    # Get available models dynamically for this API key
+    candidate_models = list(PREFERRED_MODELS)
     try:
-        model = genai.GenerativeModel(MODEL)
-        response = model.generate_content(
-            [
-                {"mime_type": media_type, "data": file_bytes},  # raw bytes — SDK handles encoding
-                prompt,
-            ],
-            generation_config={"response_mime_type": "application/json"},
-        )
-    except Exception as e:
-        if "401" in str(e) or "authentication" in str(e).lower() or "ACCESS_TOKEN_TYPE_UNSUPPORTED" in str(e):
-            raise ValueError("Invalid Gemini API Key in backend/.env. Please get a free API key from https://aistudio.google.com/apikey and set GEMINI_API_KEY in backend/.env")
-        raise e
+        online_models = [m.name.replace("models/", "") for m in genai.list_models() if "generateContent" in m.supported_generation_methods]
+        if online_models:
+            flash_models = [m for m in online_models if "flash" in m and "preview" not in m and "exp" not in m]
+            pro_models = [m for m in online_models if "pro" in m and "preview" not in m and "exp" not in m]
+            other_models = [m for m in online_models if m not in flash_models and m not in pro_models]
+            candidate_models = flash_models + pro_models + candidate_models + other_models
+    except Exception:
+        pass
 
-    text = response.text.strip()
-    if text.startswith("```"):
-        text = text.strip("`")
-        if text.startswith("json"):
-            text = text[4:]
-        text = text.strip()
+    seen = set()
+    ordered_models = []
+    for m in candidate_models:
+        if m not in seen:
+            seen.add(m)
+            ordered_models.append(m)
 
-    try:
-        parsed = json.loads(text)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Model did not return valid JSON: {e}\nRaw output: {text[:500]}")
+    for model_name in ordered_models:
+        try:
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(
+                [
+                    {"mime_type": media_type, "data": file_bytes},
+                    prompt,
+                ],
+                generation_config={"response_mime_type": "application/json"},
+            )
+            response_text = response.text or ""
+            if response_text.strip():
+                break
+        except Exception as e:
+            last_error = e
+            err_msg = str(e).lower()
+            if "401" in err_msg or "authentication" in err_msg or "access_token_type_unsupported" in err_msg or "api_key" in err_msg:
+                raise ValueError("Invalid Gemini API Key in backend/.env. Please get a free API key from https://aistudio.google.com/apikey and set GEMINI_API_KEY in backend/.env")
+            continue
 
-    return parsed
+    if not response_text.strip():
+        if last_error:
+            raise ValueError(f"AI Extraction failed: {last_error}")
+        raise ValueError("Empty response received from Gemini API.")
+
+    return _repair_and_parse_json(response_text)
+

@@ -1,0 +1,23 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Credentials
+*.pem
+*.key
+
+# Frontend
+node_modules/
+dist/
+build/
+.next/

@@ -1,545 +1,618 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Healthcare Admin AI — Complete & Edit Missing Details</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg-dark: #0b1120;
-    --card-bg: #ffffff;
-    --ink: #0f172a;
-    --muted: #64748b;
-    --line: #e2e8f0;
-    --accent: #2f6fed;
-    --accent-hover: #1e5cd8;
-    --accent-soft: #eff6ff;
-    --missing: #d9455f;
-    --missing-soft: #fef2f2;
-    --success: #10b981;
-    --success-soft: #ecfdf5;
-  }
-  
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Healthcare Admin AI — Complete & Edit Missing Details</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0b1120;
+      --card-bg: #ffffff;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --accent: #2f6fed;
+      --accent-hover: #1e5cd8;
+      --accent-soft: #eff6ff;
+      --missing: #d9455f;
+      --missing-soft: #fef2f2;
+      --success: #10b981;
+      --success-soft: #ecfdf5;
+    }
 
-  body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: #f8fafc;
-    color: var(--ink);
-    min-height: 100vh;
-    padding: 40px 20px 80px;
-  }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  .container {
-    max-width: 800px;
-    margin: 0 auto;
-  }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f8fafc;
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 40px 20px 80px;
+    }
 
-  .header-brand {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13.5px;
-    font-weight: 700;
-    color: var(--accent);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
 
-  .header-brand .dot {
-    width: 8px;
-    height: 8px;
-    background: var(--accent);
-    border-radius: 50%;
-  }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
 
-  .header {
-    margin-bottom: 24px;
-  }
+    .header-brand .dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
 
-  .header .badge-tag {
-    display: inline-block;
-    background: var(--missing-soft);
-    color: var(--missing);
-    font-size: 11.5px;
-    font-weight: 700;
-    padding: 4px 12px;
-    border-radius: 20px;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    margin-bottom: 10px;
-  }
+    .header {
+      margin-bottom: 24px;
+    }
 
-  .header h1 {
-    font-size: 26px;
-    font-weight: 800;
-    color: var(--ink);
-    letter-spacing: -0.02em;
-  }
+    .header .badge-tag {
+      display: inline-block;
+      background: var(--missing-soft);
+      color: var(--missing);
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 10px;
+    }
 
-  .header p {
-    font-size: 14.5px;
-    color: var(--muted);
-    margin-top: 6px;
-  }
+    .header h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
 
-  .card {
-    background: var(--card-bg);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    padding: 28px 32px;
-    box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.06);
-    margin-bottom: 24px;
-  }
+    .header p {
+      font-size: 14.5px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
 
-  .doc-summary {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #f1f5f9;
-    padding: 16px 20px;
-    border-radius: 12px;
-    font-size: 14px;
-    margin-bottom: 20px;
-  }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 28px 32px;
+      box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.06);
+      margin-bottom: 24px;
+    }
 
-  .doc-summary .title { font-weight: 700; color: var(--ink); font-size: 15px; }
-  .doc-summary .id-tag { color: var(--muted); font-size: 13px; font-weight: 600; }
+    .doc-summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f1f5f9;
+      padding: 16px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
 
-  /* Edit banner */
-  .edit-notice {
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-size: 13px;
-    color: #1e40af;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    line-height: 1.4;
-  }
+    .doc-summary .title {
+      font-weight: 700;
+      color: var(--ink);
+      font-size: 15px;
+    }
 
-  /* Platform selector bar */
-  .platform-bar {
-    background: #fafcfd;
-    border: 1px solid #cbd5e1;
-    border-radius: 12px;
-    padding: 14px 18px;
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    flex-wrap: wrap;
-  }
+    .doc-summary .id-tag {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
 
-  .platform-bar label {
-    font-size: 13px;
-    font-weight: 700;
-    color: #334155;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
+    /* Edit banner */
+    .edit-notice {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #1e40af;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      line-height: 1.4;
+    }
 
-  .platform-select {
-    padding: 9px 14px;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    font-size: 13.5px;
-    font-family: inherit;
-    font-weight: 600;
-    background: #fff;
-    color: var(--ink);
-    outline: none;
-    cursor: pointer;
-    min-width: 240px;
-  }
+    /* Platform selector bar */
+    .platform-bar {
+      background: #fafcfd;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
 
-  .platform-select:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.15);
-  }
+    .platform-bar label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
-  .field-block {
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    background: #fff;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
+    .platform-select {
+      padding: 9px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-family: inherit;
+      font-weight: 600;
+      background: #fff;
+      color: var(--ink);
+      outline: none;
+      cursor: pointer;
+      min-width: 240px;
+    }
 
-  .field-block:focus-within {
-    border-color: var(--accent);
-    box-shadow: 0 2px 8px rgba(47, 111, 237, 0.08);
-  }
+    .platform-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.15);
+    }
 
-  .field-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-  }
+    .field-block {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      background: #fff;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
 
-  .field-label {
-    font-size: 14.5px;
-    font-weight: 700;
-    color: var(--ink);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+    .field-block:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px rgba(47, 111, 237, 0.08);
+    }
 
-  .pill-tag {
-    font-size: 11px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 12px;
-    text-transform: uppercase;
-  }
+    .field-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
 
-  .pill-tag.missing { background: #fef2f2; color: #d9455f; }
-  .pill-tag.filled { background: #eff6ff; color: #2f6fed; }
+    .field-label {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-  .btn-contact {
-    background: var(--accent-soft);
-    color: var(--accent);
-    border: 1px solid rgba(47, 111, 237, 0.3);
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 12.5px;
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: background 0.2s, color 0.2s;
-  }
+    .pill-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+    }
 
-  .btn-contact:hover {
-    background: #dbeafe;
-    color: var(--accent-hover);
-  }
+    .pill-tag.missing {
+      background: #fef2f2;
+      color: #d9455f;
+    }
 
-  .input-field {
-    width: 100%;
-    padding: 12px 14px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    font-size: 14px;
-    font-family: inherit;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
+    .pill-tag.filled {
+      background: #eff6ff;
+      color: #2f6fed;
+    }
 
-  .input-field:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.15);
-  }
+    .btn-contact {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(47, 111, 237, 0.3);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s, color 0.2s;
+    }
 
-  /* Dynamic Contact Help Box */
-  .help-box {
-    display: none;
-    background: #f8fafc;
-    border: 1.5px dashed #93c5fd;
-    border-radius: 12px;
-    padding: 16px 18px;
-    margin-top: 14px;
-    font-size: 13px;
-    line-height: 1.6;
-    animation: fadeIn 0.2s ease-in-out;
-  }
+    .btn-contact:hover {
+      background: #dbeafe;
+      color: var(--accent-hover);
+    }
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+    .input-field {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
 
-  .help-box.open { display: block; }
-  
-  .help-box .help-title {
-    font-weight: 700;
-    color: #1e3a8a;
-    font-size: 13.5px;
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
+    .input-field:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.15);
+    }
 
-  .help-box .hint-text {
-    color: #334155;
-    background: #ffffff;
-    padding: 10px 12px;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    margin-bottom: 10px;
-    font-size: 13px;
-  }
+    /* Dynamic Contact Help Box */
+    .help-box {
+      display: none;
+      background: #f8fafc;
+      border: 1.5px dashed #93c5fd;
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-top: 14px;
+      font-size: 13px;
+      line-height: 1.6;
+      animation: fadeIn 0.2s ease-in-out;
+    }
 
-  .help-box .contact-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 8px;
-    margin-top: 8px;
-  }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-4px);
+      }
 
-  .help-box .contact-card {
-    background: #fff;
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    font-size: 12.5px;
-    color: #475569;
-  }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-  .help-box .contact-card b {
-    color: var(--ink);
-  }
+    .help-box.open {
+      display: block;
+    }
 
-  .help-box .portal-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 10px;
-    font-size: 12.5px;
-    font-weight: 700;
-    color: var(--accent);
-    text-decoration: none;
-  }
+    .help-box .help-title {
+      font-weight: 700;
+      color: #1e3a8a;
+      font-size: 13.5px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
-  .help-box .portal-link:hover {
-    text-decoration: underline;
-  }
+    .help-box .hint-text {
+      color: #334155;
+      background: #ffffff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
 
-  .actions {
-    display: flex;
-    gap: 14px;
-    margin-top: 28px;
-  }
+    .help-box .contact-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
 
-  .btn-submit {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    padding: 14px 28px;
-    border-radius: 10px;
-    font-size: 15px;
-    font-weight: 700;
-    font-family: inherit;
-    cursor: pointer;
-    box-shadow: 0 4px 14px rgba(47, 111, 237, 0.3);
-    transition: background 0.2s, transform 0.1s;
-  }
+    .help-box .contact-card {
+      background: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      font-size: 12.5px;
+      color: #475569;
+    }
 
-  .btn-submit:hover {
-    background: var(--accent-hover);
-  }
+    .help-box .contact-card b {
+      color: var(--ink);
+    }
 
-  .btn-secondary {
-    background: #fff;
-    color: var(--muted);
-    border: 1px solid var(--line);
-    padding: 14px 22px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-block;
-  }
+    .help-box .portal-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--accent);
+      text-decoration: none;
+    }
 
-  /* Modal */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(4px);
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-  }
+    .help-box .portal-link:hover {
+      text-decoration: underline;
+    }
 
-  .modal-overlay.open { display: flex; }
+    .actions {
+      display: flex;
+      gap: 14px;
+      margin-top: 28px;
+    }
 
-  .success-card {
-    background: #fff;
-    border-radius: 20px;
-    padding: 40px 36px;
-    max-width: 480px;
-    text-align: center;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-  }
+    .btn-submit {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(47, 111, 237, 0.3);
+      transition: background 0.2s, transform 0.1s;
+    }
 
-  .success-icon {
-    width: 64px;
-    height: 64px;
-    background: var(--success-soft);
-    color: var(--success);
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 18px;
-  }
+    .btn-submit:hover {
+      background: var(--accent-hover);
+    }
 
-  .success-card h2 { font-size: 22px; margin-bottom: 8px; color: var(--ink); }
-  .success-card p { font-size: 14.5px; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
-</style>
+    .btn-secondary {
+      background: #fff;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 14px 22px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .success-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 40px 36px;
+      max-width: 480px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .success-icon {
+      width: 64px;
+      height: 64px;
+      background: var(--success-soft);
+      color: var(--success);
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
+
+    .success-card h2 {
+      font-size: 22px;
+      margin-bottom: 8px;
+      color: var(--ink);
+    }
+
+    .success-card p {
+      font-size: 14.5px;
+      color: var(--muted);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+  </style>
 </head>
+
 <body>
 
-<div class="container">
-  <div class="header-brand">
-    <span class="dot"></span> Healthcare Admin AI
-  </div>
-
-  <div class="header">
-    <span class="badge-tag">Missing Columns Intake</span>
-    <h1>Complete &amp; Edit Form Details</h1>
-    <p>Fill or edit the required missing values below to merge entries into the primary document and finalize processing.</p>
-  </div>
-
-  <div class="card" id="formCard">
-    <div class="doc-summary" id="docSummary">
-      <div>
-        <div class="title" id="formLabel">Loading document details…</div>
-        <div style="font-size: 12.5px; color: var(--muted); margin-top: 2px;" id="fileName"></div>
-      </div>
-      <div class="id-tag" id="recordIdTag"></div>
+  <div class="container">
+    <div class="header-brand">
+      <span class="dot"></span> Healthcare Admin AI
     </div>
 
-    <!-- Edit notice banner -->
-    <div class="edit-notice">
-      <span>✏️</span>
-      <div>
-        <b>Manual Value Editing Enabled:</b> If you mistakenly entered wrong values for any missing column, you can edit them directly in the fields below and submit to update.
-      </div>
+    <div class="header">
+      <span class="badge-tag">Missing Columns Intake</span>
+      <h1>Complete &amp; Edit Form Details</h1>
+      <p>Fill or edit the required missing values below to merge entries into the primary document and finalize
+        processing.</p>
     </div>
 
-    <!-- Site / Insurer Platform Selector -->
-    <div class="platform-bar">
-      <label for="platformSelect">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    <div class="card" id="formCard">
+      <div class="doc-summary" id="docSummary">
+        <div>
+          <div class="title" id="formLabel">Loading document details…</div>
+          <div style="font-size: 12.5px; color: var(--muted); margin-top: 2px;" id="fileName"></div>
+        </div>
+        <div class="id-tag" id="recordIdTag"></div>
+      </div>
+
+      <!-- Edit notice banner -->
+      <div class="edit-notice">
+        <span>✏️</span>
+        <div>
+          <b>Manual Value Editing Enabled:</b> If you mistakenly entered wrong values for any missing column, you can
+          edit them directly in the fields below and submit to update.
+        </div>
+      </div>
+
+      <!-- Site / Insurer Platform Selector -->
+      <div class="platform-bar">
+        <label for="platformSelect">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          Site / Insurer Platform:
+        </label>
+        <select id="platformSelect" class="platform-select" onchange="handlePlatformChange()">
+          <option value="">Detecting platform...</option>
+        </select>
+      </div>
+
+      <form id="missingForm" onsubmit="handleSubmit(event)">
+        <div id="fieldsContainer">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn-submit" id="submitBtn">Update &amp; Merge Entries</button>
+          <a href="#" onclick="goBackToDashboard(); return false;" class="btn-secondary">Back to Dashboard</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div class="modal-overlay" id="successModal">
+    <div class="success-card">
+      <div class="success-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
         </svg>
-        Site / Insurer Platform:
-      </label>
-      <select id="platformSelect" class="platform-select" onchange="handlePlatformChange()">
-        <option value="">Detecting platform...</option>
-      </select>
-    </div>
-
-    <form id="missingForm" onsubmit="handleSubmit(event)">
-      <div id="fieldsContainer">
-        <!-- Rendered dynamically -->
       </div>
-
-      <div class="actions">
-        <button type="submit" class="btn-submit" id="submitBtn">Update &amp; Merge Entries</button>
-        <a href="/static/dashboard.html" class="btn-secondary">Back to Dashboard</a>
+      <h2>Entries Merged Successfully!</h2>
+      <p>The missing columns have been verified, updated, and merged into the primary form document.</p>
+      <div style="display: flex; gap: 10px; flex-direction: column;">
+        <button type="button" onclick="closeSuccessModalAndEdit()" class="btn-secondary"
+          style="font-weight: 700; color: #1e40af; border-color: #bfdbfe; background: #eff6ff;">
+          ✏️ Filled Wrong Values? Edit Fields Again
+        </button>
+        <a href="#" onclick="goBackToDashboard(); return false;" class="btn-submit"
+          style="display: block; text-decoration: none; text-align: center;">Return to Dashboard</a>
       </div>
-    </form>
-  </div>
-</div>
-
-<!-- Success Modal -->
-<div class="modal-overlay" id="successModal">
-  <div class="success-card">
-    <div class="success-icon">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M22 11.08V12a10 10 10 0 1 1-5.93-9.14"></path>
-        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-      </svg>
-    </div>
-    <h2>Entries Merged Successfully!</h2>
-    <p>The missing columns have been verified, updated, and merged into the primary form document.</p>
-    <div style="display: flex; gap: 10px; flex-direction: column;">
-      <button type="button" onclick="closeSuccessModalAndEdit()" class="btn-secondary" style="font-weight: 700; color: #1e40af; border-color: #bfdbfe; background: #eff6ff;">
-        ✏️ Filled Wrong Values? Edit Fields Again
-      </button>
-      <a href="/static/dashboard.html" class="btn-submit" style="display: block; text-decoration: none; text-align: center;">Return to Dashboard</a>
     </div>
   </div>
-</div>
 
-<script>
-  const API_BASE = window.location.protocol.startsWith('http') 
-    ? window.location.origin 
-    : 'http://127.0.0.1:8000';
-
-  const params = new URLSearchParams(window.location.search);
-  const recordId = params.get('record_id') || 1;
-  let currentPlatformKey = params.get('platform') || '';
-
-  async function loadDetails(selectedPlatform = '') {
-    try {
-      const platformQuery = selectedPlatform ? `?platform=${encodeURIComponent(selectedPlatform)}` : '';
-      const res = await fetch(`${API_BASE}/records/${recordId}/missing-details${platformQuery}`);
-      if (!res.ok) throw new Error("Could not load record details.");
-      
-      const data = await res.json();
-      document.getElementById('formLabel').textContent = data.form_label;
-      document.getElementById('fileName').textContent = data.filename || 'Source Document';
-      document.getElementById('recordIdTag').textContent = `Record #${data.id}`;
-
-      // Populate platform selector options
-      const sel = document.getElementById('platformSelect');
-      if (data.all_platforms && sel.options.length <= 1) {
-        sel.innerHTML = '';
-        data.all_platforms.forEach(p => {
-          const opt = document.createElement('option');
-          opt.value = p.key;
-          opt.textContent = p.name;
-          sel.appendChild(opt);
-        });
+  <script>
+    const API_BASE = (function () {
+      if (window.CUSTOM_API_BASE) return window.CUSTOM_API_BASE;
+      const host = window.location.hostname;
+      const protocol = window.location.protocol;
+      if (host === 'localhost' || host === '127.0.0.1' || protocol === 'file:') {
+        return 'http://localhost:8000';
       }
-
-      if (data.platform_key) {
-        sel.value = data.platform_key;
-        currentPlatformKey = data.platform_key;
+      if (host.includes('onrender.com')) {
+        return window.location.origin;
       }
+      return 'https://healthcare-lscz.onrender.com';
+    })();
 
-      const container = document.getElementById('fieldsContainer');
-      container.innerHTML = '';
+    function goBackToDashboard() {
+      try {
+        const sessionStr = localStorage.getItem('healthai_session');
+        if (sessionStr) {
+          const session = JSON.parse(sessionStr);
+          if (session.role === 'admin') {
+            window.location.href = 'admin_dashboard.html';
+            return;
+          }
+        }
+      } catch (e) {}
+      window.location.href = 'customer_dashboard.html';
+    }
 
-      if (!data.missing_fields || data.missing_fields.length === 0) {
-        container.innerHTML = `
+    const params = new URLSearchParams(window.location.search);
+    const recordId = params.get('record_id') || 1;
+    let currentPlatformKey = params.get('platform') || '';
+
+    async function loadDetails(selectedPlatform = '') {
+      try {
+        const platformQuery = selectedPlatform ? `?platform=${encodeURIComponent(selectedPlatform)}` : '';
+        const res = await fetch(`${API_BASE}/records/${recordId}/missing-details${platformQuery}`);
+        if (!res.ok) throw new Error("Could not load record details.");
+
+        const data = await res.json();
+        document.getElementById('formLabel').textContent = data.form_label;
+        document.getElementById('fileName').textContent = data.filename || 'Source Document';
+        document.getElementById('recordIdTag').textContent = `Record #${data.id}`;
+
+        // Populate platform selector options
+        const sel = document.getElementById('platformSelect');
+        if (data.all_platforms && sel.options.length <= 1) {
+          sel.innerHTML = '';
+          data.all_platforms.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.key;
+            opt.textContent = p.name;
+            sel.appendChild(opt);
+          });
+        }
+
+        if (data.platform_key) {
+          sel.value = data.platform_key;
+          currentPlatformKey = data.platform_key;
+        }
+
+        const container = document.getElementById('fieldsContainer');
+        container.innerHTML = '';
+
+        document.getElementById('submitBtn').style.display = 'inline-block';
+
+        if (!data.missing_fields || data.missing_fields.length === 0) {
+          container.innerHTML = `
           <div style="padding: 40px; text-align: center; color: var(--muted); font-size: 15px;">
-            🎉 All missing fields for this form have already been completed!
+            🎉 No fields available to edit for this document.
           </div>
         `;
-        document.getElementById('submitBtn').style.display = 'none';
-        return;
-      }
+          document.getElementById('submitBtn').style.display = 'none';
+          return;
+        }
 
-      data.missing_fields.forEach(f => {
-        const block = document.createElement('div');
-        block.className = 'field-block';
-        
-        const help = f.contact_help || {};
-        const helpId = `help_${f.key}`;
-        
-        const existingInput = document.getElementById(`inp_${f.key}`);
-        const displayVal = (existingInput && existingInput.value !== undefined) 
-          ? existingInput.value 
-          : (f.value || '');
+        data.missing_fields.forEach(f => {
+          const block = document.createElement('div');
+          block.className = 'field-block';
 
-        const isUserFilled = f.confidence === 'user_filled';
-        const statusBadge = isUserFilled 
-          ? `<span class="pill-tag filled">Filled — Editable</span>`
-          : `<span class="pill-tag missing">Missing</span>`;
+          const help = f.contact_help || {};
+          const helpId = `help_${f.key}`;
 
-        block.innerHTML = `
+          const existingInput = document.getElementById(`inp_${f.key}`);
+          const displayVal = (existingInput && existingInput.value !== undefined)
+            ? existingInput.value
+            : (f.value || '');
+
+          const isUserFilled = f.confidence === 'user_filled';
+          const statusBadge = isUserFilled
+            ? `<span class="pill-tag filled">Filled — Editable</span>`
+            : `<span class="pill-tag missing">Missing</span>`;
+
+          block.innerHTML = `
           <div class="field-header">
             <label class="field-label" for="inp_${f.key}">
               ${f.label}
@@ -571,73 +644,74 @@
             ${help.portal ? `<a href="${help.portal}" target="_blank" class="portal-link">🌐 Visit ${data.platform_detected} Portal &rarr;</a>` : ''}
           </div>
         `;
-        container.appendChild(block);
-      });
+          container.appendChild(block);
+        });
 
-    } catch (err) {
-      alert("Error loading form details: " + err.message);
-    }
-  }
-
-  function handlePlatformChange() {
-    const selected = document.getElementById('platformSelect').value;
-    loadDetails(selected);
-  }
-
-  function toggleHelp(id) {
-    const el = document.getElementById(id);
-    if (el) {
-      el.classList.toggle('open');
-    }
-  }
-
-  function closeSuccessModalAndEdit() {
-    document.getElementById('successModal').classList.remove('open');
-    const submitBtn = document.getElementById('submitBtn');
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Update & Merge Entries';
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    const inputs = document.querySelectorAll('#fieldsContainer input[data-key]');
-    const filledFields = {};
-
-    inputs.forEach(inp => {
-      filledFields[inp.dataset.key] = inp.value.trim();
-    });
-
-    const submitBtn = document.getElementById('submitBtn');
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Updating entries…';
-
-    try {
-      const res = await fetch(`${API_BASE}/submit-missing`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          record_id: parseInt(recordId, 10),
-          filled_fields: filledFields
-        })
-      });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.detail || 'Failed to submit entries.');
+      } catch (err) {
+        alert("Error loading form details: " + err.message);
       }
+    }
 
-      // Show success modal
-      document.getElementById('successModal').classList.add('open');
+    function handlePlatformChange() {
+      const selected = document.getElementById('platformSelect').value;
+      loadDetails(selected);
+    }
 
-    } catch (err) {
-      alert("Submission error: " + err.message);
+    function toggleHelp(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.toggle('open');
+      }
+    }
+
+    function closeSuccessModalAndEdit() {
+      document.getElementById('successModal').classList.remove('open');
+      const submitBtn = document.getElementById('submitBtn');
       submitBtn.disabled = false;
       submitBtn.textContent = 'Update & Merge Entries';
     }
-  }
 
-  window.addEventListener('DOMContentLoaded', () => loadDetails(currentPlatformKey));
-</script>
+    async function handleSubmit(e) {
+      e.preventDefault();
+      const inputs = document.querySelectorAll('#fieldsContainer input[data-key]');
+      const filledFields = {};
+
+      inputs.forEach(inp => {
+        filledFields[inp.dataset.key] = inp.value.trim();
+      });
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Updating entries…';
+
+      try {
+        const res = await fetch(`${API_BASE}/submit-missing`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            record_id: parseInt(recordId, 10),
+            filled_fields: filledFields
+          })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.detail || 'Failed to submit entries.');
+        }
+
+        // Show success modal
+        document.getElementById('successModal').classList.add('open');
+
+      } catch (err) {
+        alert("Submission error: " + err.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Update & Merge Entries';
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => loadDetails(currentPlatformKey));
+  </script>
 
 </body>
+
 </html>
