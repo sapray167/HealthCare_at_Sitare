@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Healthcare Admin AI — Customer Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #16213a;
+    --muted: #6b7688;
+    --line: #e3e7ee;
+    --accent: #2f6fed;
+    --accent-hover: #1e5cd8;
+    --accent-soft: #eaf1ff;
+    --high: #1e9e6d;
+    --high-soft: #e5f7ee;
+    --medium: #d99a1b;
+    --medium-soft: #fdf3de;
+    --missing: #d9455f;
+    --missing-soft: #fce6ea;
+    --bg: #f3f5f9;
+    --sidebar: #111827;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    display: flex;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 240px;
+    background: var(--sidebar);
+    color: #9ca3af;
+    padding: 24px 18px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar .brand {
+    color: #fff;
+    font-weight: 800;
+    font-size: 16px;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sidebar .brand .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(47, 111, 237, 0.6);
+  }
+  .sidebar nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    color: #9ca3af;
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    transition: all 0.2s;
+  }
+  .sidebar nav a.active { background: rgba(47, 111, 237, 0.15); color: #60a5fa; font-weight: 600; }
+  .sidebar nav a:hover:not(.active) { background: rgba(255,255,255,0.05); color: #f3f4f6; }
+  
+  .user-role-badge {
+    margin-top: auto;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 12.5px;
+    color: #d1d5db;
+  }
+
+  .main { flex: 1; padding: 28px 36px 60px; max-width: 1280px; margin: 0 auto; }
+  
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    background: #fff;
+    padding: 20px 24px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  }
+  .topbar h1 { font-size: 22px; font-weight: 800; }
+  .topbar .sub { color: var(--muted); font-size: 13.5px; margin-top: 3px; }
+  
+  .who { display: flex; align-items: center; gap: 14px; }
+  .user-chip {
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px 22px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  }
+  .stat-card .label { font-size: 13px; color: var(--muted); margin-bottom: 8px; font-weight: 500; }
+  .stat-card .value { font-size: 26px; font-weight: 800; }
+  .stat-card.pending .value { color: var(--medium); }
+  .stat-card.ok .value { color: var(--high); }
+
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 24px 26px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  }
+  .card h2 { font-size: 16px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .card .card-sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+
+  .upload-box {
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .upload-box:hover, .upload-box.drag { border-color: var(--accent); background: var(--accent-soft); }
+  .upload-box input { display: none; }
+  .upload-icon { font-size: 32px; margin-bottom: 10px; }
+  .upload-title { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+  .upload-sub { font-size: 13px; color: var(--muted); }
+
+  .form-row { display: flex; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+  .form-group { flex: 1; min-width: 220px; }
+  label { font-size: 13px; font-weight: 600; color: var(--ink); display: block; margin-bottom: 7px; }
+  select {
+    width: 100%; padding: 11px 14px; border: 1px solid var(--line); border-radius: 10px; font-size: 14px; background: #fff; outline: none;
+    font-family: inherit; font-weight: 500;
+  }
+  select:focus { border-color: var(--accent); }
+
+  button {
+    background: var(--accent); color: #fff; border: none; padding: 12px 22px;
+    border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer;
+    font-family: inherit; transition: background 0.2s, transform 0.1s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  button:hover:not(:disabled) { background: var(--accent-hover); }
+  button:disabled { background: #cbd5e1; color: #94a3b8; cursor: not-allowed; }
+  button.secondary { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
+  button.secondary:hover:not(:disabled) { background: var(--accent-soft); }
+  button.small { padding: 6px 12px; font-size: 12.5px; border-radius: 8px; }
+
+  .status-banner {
+    display: none;
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    margin-top: 16px;
+    line-height: 1.5;
+  }
+  .status-banner.success { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { text-align: left; color: var(--muted); font-weight: 600; font-size: 12px; padding: 12px; border-bottom: 1px solid var(--line); text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 14px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+  .status-pill.pending_extraction { background: var(--medium-soft); color: var(--medium); }
+  .status-pill.missing { background: var(--missing-soft); color: var(--missing); }
+  .status-pill.ready { background: var(--high-soft); color: var(--high); }
+  .status-pill.completed { background: #eff6ff; color: #2f6fed; }
+
+  .disabled-action-hint {
+    font-size: 11.5px;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6);
+    backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 100;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 16px; padding: 28px; width: 680px; max-width: 92vw; max-height: 85vh; overflow-y: auto; }
+  .modal pre { white-space: pre-wrap; background: #f8fafc; border: 1px solid var(--line); border-radius: 10px; padding: 16px; font-size: 13px; margin-top: 14px; font-family: monospace; }
+  .modal .close { float: right; cursor: pointer; color: var(--muted); font-size: 24px; line-height: 1; }
+</style>
+<script>
+  (function() {
+    const sessionStr = localStorage.getItem('healthai_session');
+    if (!sessionStr) {
+      window.location.href = window.location.protocol.startsWith('http') ? '/static/login.html' : 'login.html';
+      return;
+    }
+  })();
+</script>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="brand"><span class="dot"></span> Health AI</div>
+  <nav>
+    <a href="#" class="active">📁 My Records</a>
+    <a href="#" onclick="return false;" style="opacity: 0.6;">📤 Upload Forms</a>
+    <a href="#" onclick="return false;" style="opacity: 0.6;">🔔 Notifications</a>
+    <a href="#" onclick="return false;" style="opacity: 0.6;">⚙️ Account Settings</a>
+  </nav>
+
+  <div class="user-role-badge">
+    <div style="font-weight: 700; color: #fff; margin-bottom: 2px;">Customer Account</div>
+    <div id="sidebarUserEmail" style="word-break: break-all; font-size: 11.5px;">user@example.com</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1>Customer Workspace</h1>
+      <div class="sub">Upload healthcare documents, track admin verification status &amp; view final reports</div>
+    </div>
+    <div class="who">
+      <div class="user-chip">
+        <span>👤</span>
+        <span id="userInfo">Customer Session</span>
+      </div>
+      <button onclick="handleLogout()" class="secondary small">Log Out</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="label">My Total Documents</div>
+      <div class="value" id="statTotal">0</div>
+    </div>
+    <div class="stat-card pending">
+      <div class="label">Pending Admin Review</div>
+      <div class="value" id="statPending">0</div>
+    </div>
+    <div class="stat-card ok">
+      <div class="label">Ready / Completed Reports</div>
+      <div class="value" id="statCompleted">0</div>
+    </div>
+  </div>
+
+  <!-- Document Upload Section -->
+  <div class="card">
+    <h2>📄 Upload Healthcare Document</h2>
+    <div class="card-sub">Submit your claim or prior-auth form. It will be sent to the Admin team for AI processing &amp; verification.</div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="formType">Select Document / Form Type</label>
+        <select id="formType"></select>
+      </div>
+    </div>
+
+    <div class="upload-box" id="dropzone">
+      <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.webp">
+      <div class="upload-icon">📁</div>
+      <div class="upload-title">Drop your document file here, or click to browse</div>
+      <div class="upload-sub">Supports PDF, PNG, JPG, or WEBP</div>
+      <div id="filenameChip" style="margin-top: 10px; font-weight: 700; color: var(--accent);"></div>
+    </div>
+
+    <div style="margin-top: 18px; display: flex; gap: 12px; align-items: center;">
+      <button id="uploadBtn">🚀 Upload Document for Admin Review</button>
+      <span id="uploadStatus" style="font-size: 13px; color: var(--muted);"></span>
+    </div>
+
+    <div class="status-banner success" id="uploadSuccessBanner"></div>
+  </div>
+
+  <!-- Recent Records Table -->
+  <div class="card">
+    <h2>📋 My Uploaded Records</h2>
+    <div class="card-sub">Track extraction status. Reports and editing are unlocked once the Admin verifies &amp; emails you.</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Record ID</th>
+          <th>Form Type</th>
+          <th>Source File</th>
+          <th>Date Uploaded</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="recordsBody">
+        <tr><td colspan="6" style="text-align:center; color: var(--muted); padding: 30px;">Loading your uploaded records…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- View Report Modal -->
+<div class="modal-overlay" id="reportModalOverlay">
+  <div class="modal">
+    <span class="close" onclick="closeReportModal()">&times;</span>
+    <h3 id="reportModalTitle">📄 Final Document Report</h3>
+    <pre id="reportModalBody">Loading report...</pre>
+    <button id="downloadReportBtn" style="margin-top: 16px; width: 100%;">📥 Download Report (.txt)</button>
+  </div>
+</div>
+
+<script>
+const API_BASE = window.location.protocol.startsWith('http') ? window.location.origin : 'http://localhost:8000';
+let currentCustomerEmail = '';
+let SCHEMAS = {};
+
+function getSession() {
+  try {
+    const s = localStorage.getItem('healthai_session');
+    return s ? JSON.parse(s) : null;
+  } catch(e) { return null; }
+}
+
+function handleLogout() {
+  localStorage.removeItem('healthai_session');
+  window.location.href = window.location.protocol.startsWith('http') ? '/static/login.html' : 'login.html';
+}
+
+async function loadSchemas() {
+  const res = await fetch(`${API_BASE}/form-types`);
+  SCHEMAS = await res.json();
+  const sel = document.getElementById("formType");
+  sel.innerHTML = "";
+  for (const [key, s] of Object.entries(SCHEMAS)) {
+    const opt = document.createElement("option");
+    opt.value = key;
+    opt.textContent = s.label;
+    sel.appendChild(opt);
+  }
+}
+
+async function refreshRecords() {
+  try {
+    const res = await fetch(`${API_BASE}/records?user_email=${encodeURIComponent(currentCustomerEmail)}`);
+    const rows = await res.json();
+    const body = document.getElementById("recordsBody");
+
+    let pendingCount = 0;
+    let completedCount = 0;
+
+    if (!rows || rows.length === 0) {
+      body.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--muted); padding: 30px;">No uploaded documents found. Upload a form above to get started.</td></tr>`;
+      document.getElementById("statTotal").textContent = "0";
+      document.getElementById("statPending").textContent = "0";
+      document.getElementById("statCompleted").textContent = "0";
+      return;
+    }
+
+    body.innerHTML = "";
+    rows.forEach((r, index) => {
+      const label = (SCHEMAS[r.form_type] && SCHEMAS[r.form_type].label) || r.form_type;
+      const customerRecordId = rows.length - index;
+
+      let statusBadge = '';
+      let actionButtons = '';
+
+      if (r.status === 'completed') {
+        completedCount++;
+        statusBadge = `<span class="status-pill completed">✅ Complete</span>`;
+        actionButtons = `
+          <div style="display:flex; gap:6px;">
+            <button class="small secondary" style="background:#eff6ff; color:#2f6fed; font-weight:600;" onclick="viewReport(${r.id})">📄 View Report</button>
+            <button class="small secondary" style="background:#f8fafc; color:#334155; font-weight:600;" onclick="editDetails(${r.id})">✏️ Edit Details</button>
+          </div>
+        `;
+      } else if (r.notification_sent === 1 || r.status === 'pending_review') {
+        pendingCount++;
+        statusBadge = `<span class="status-pill missing">⚠️ Missing Fields</span>`;
+        actionButtons = `
+          <button class="small secondary" style="background:#eff6ff; color:#2f6fed; font-weight:600;" onclick="editDetails(${r.id})">✏️ Edit Details</button>
+        `;
+      } else {
+        pendingCount++;
+        statusBadge = `<span class="status-pill pending_extraction">⏳ Pending Admin Extraction</span>`;
+        actionButtons = `<span class="disabled-action-hint">🔒 Extraction &amp; Report locked until Admin verifies &amp; emails link</span>`;
+      }
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><b>#${customerRecordId}</b></td>
+        <td>${label}</td>
+        <td>${r.filename || "—"}</td>
+        <td>${new Date(r.created_at + "Z").toLocaleString()}</td>
+        <td>${statusBadge}</td>
+        <td>${actionButtons}</td>
+      `;
+      body.appendChild(tr);
+    });
+
+    document.getElementById("statTotal").textContent = rows.length;
+    document.getElementById("statPending").textContent = pendingCount;
+    document.getElementById("statCompleted").textContent = completedCount;
+
+  } catch(e) {
+    console.warn("Could not load records:", e);
+  }
+}
+
+function editDetails(id) {
+  window.location.href = `/static/fill_missing.html?record_id=${id}`;
+}
+
+async function viewReport(id) {
+  try {
+    const res = await fetch(`${API_BASE}/records/${id}`);
+    const rec = await res.json();
+    const label = (SCHEMAS[rec.form_type] && SCHEMAS[rec.form_type].label) || rec.form_type;
+
+    let draftText = rec.draft_text;
+    if (!draftText) {
+      const parsedFields = JSON.parse(rec.fields_json || "{}");
+      const cleanFields = {};
+      for (const [k, v] of Object.entries(parsedFields)) {
+        cleanFields[k] = (v && typeof v === "object" && "value" in v) ? v.value : String(v || "");
+      }
+      const fd = new FormData();
+      fd.append("form_type", rec.form_type);
+      fd.append("fields_json", JSON.stringify(cleanFields));
+      fd.append("record_id", id);
+      const genRes = await fetch(`${API_BASE}/generate`, { method: "POST", body: fd });
+      if (genRes.ok) draftText = await genRes.text();
+    }
+
+    document.getElementById("reportModalTitle").textContent = `📄 Document Report — Record #${rec.id} (${label})`;
+    document.getElementById("reportModalBody").textContent = draftText || "No report text available yet.";
+    
+    document.getElementById("downloadReportBtn").onclick = () => {
+      const blob = new Blob([document.getElementById("reportModalBody").textContent], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Report_Record_${rec.id}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    document.getElementById("reportModalOverlay").classList.add("open");
+  } catch(e) {
+    alert("Could not load report: " + e.message);
+  }
+}
+
+function closeReportModal() {
+  document.getElementById("reportModalOverlay").classList.remove("open");
+}
+
+/* Upload handling */
+const dropzone = document.getElementById("dropzone");
+const fileInput = document.getElementById("fileInput");
+dropzone.addEventListener("click", () => fileInput.click());
+dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("drag"); });
+dropzone.addEventListener("dragleave", () => dropzone.classList.remove("drag"));
+dropzone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropzone.classList.remove("drag");
+  if (e.dataTransfer.files.length) {
+    fileInput.files = e.dataTransfer.files;
+    document.getElementById("filenameChip").textContent = "Selected: " + fileInput.files[0].name;
+  }
+});
+fileInput.addEventListener("change", () => {
+  document.getElementById("filenameChip").textContent = fileInput.files.length ? "Selected: " + fileInput.files[0].name : "";
+});
+
+document.getElementById("uploadBtn").addEventListener("click", async () => {
+  if (!fileInput.files.length) {
+    alert("Please select a document file first.");
+    return;
+  }
+  const formType = document.getElementById("formType").value;
+  const btn = document.getElementById("uploadBtn");
+  const status = document.getElementById("uploadStatus");
+  const banner = document.getElementById("uploadSuccessBanner");
+
+  btn.disabled = true;
+  status.textContent = "Uploading document...";
+  banner.style.display = "none";
+
+  const fd = new FormData();
+  fd.append("file", fileInput.files[0]);
+  fd.append("form_type", formType);
+  fd.append("user_email", currentCustomerEmail);
+
+  try {
+    const res = await fetch(`${API_BASE}/customer-upload`, { method: "POST", body: fd });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "Upload failed");
+    }
+    const data = await res.json();
+    
+    status.textContent = "Uploaded!";
+    banner.style.display = "block";
+    banner.innerHTML = `
+      <strong>✅ Upload Successful!</strong> (Record #${data.record_id})<br>
+      Status: <b>Pending Admin Extraction</b>. The system administrator will process your document and notify you by email.
+    `;
+
+    fileInput.value = "";
+    document.getElementById("filenameChip").textContent = "";
+    refreshRecords();
+
+  } catch(e) {
+    status.textContent = "";
+    alert("Upload error: " + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+window.addEventListener("DOMContentLoaded", async () => {
+  const session = getSession();
+  if (session) {
+    currentCustomerEmail = session.email;
+    document.getElementById("userInfo").textContent = session.full_name ? `${session.full_name} (${session.email})` : session.email;
+    document.getElementById("sidebarUserEmail").textContent = session.email;
+  }
+  await loadSchemas();
+  await refreshRecords();
+});
+</script>
+
+</body>
+</html>

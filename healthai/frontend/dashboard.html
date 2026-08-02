@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Healthcare Admin AI — Dashboard</title>
+<style>
+  :root {
+    --ink: #16213a;
+    --muted: #6b7688;
+    --line: #e3e7ee;
+    --accent: #2f6fed;
+    --accent-soft: #eaf1ff;
+    --high: #1e9e6d;
+    --high-soft: #e5f7ee;
+    --medium: #d99a1b;
+    --medium-soft: #fdf3de;
+    --low: #e0672c;
+    --low-soft: #fdeee5;
+    --missing: #d9455f;
+    --missing-soft: #fce6ea;
+    --bg: #f3f5f9;
+    --sidebar: #16213a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    margin: 0;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 220px;
+    background: var(--sidebar);
+    color: #cfd6e6;
+    padding: 22px 16px;
+    flex-shrink: 0;
+  }
+  .sidebar .brand { color: #fff; font-weight: 700; font-size: 15px; margin-bottom: 28px; display: flex; align-items: center; gap: 8px; }
+  .sidebar .brand .dot { width: 10px; height: 10px; border-radius: 3px; background: var(--accent); display: inline-block; }
+  .sidebar nav a {
+    display: block;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: #cfd6e6;
+    text-decoration: none;
+    font-size: 13.5px;
+    margin-bottom: 4px;
+  }
+  .sidebar nav a.active { background: rgba(255,255,255,0.08); color: #fff; font-weight: 600; }
+
+  .main { flex: 1; padding: 24px 32px 60px; max-width: 1280px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+  .topbar h1 { font-size: 19px; margin: 0; }
+  .topbar .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .who { font-size: 13px; color: var(--muted); }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+  .stat-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .stat-card .label { font-size: 12.5px; color: var(--muted); margin-bottom: 6px; }
+  .stat-card .value { font-size: 24px; font-weight: 700; }
+  .stat-card.alert .value { color: var(--missing); }
+  .stat-card.ok .value { color: var(--high); }
+  .stat-card.pending .value { color: var(--medium); }
+
+  .grid2 { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; margin-bottom: 20px; align-items: start; }
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px 22px;
+  }
+  .card h2 { font-size: 14.5px; margin: 0 0 16px; }
+  .card .card-sub { font-size: 12px; color: var(--muted); margin: -12px 0 16px; }
+
+  .row { display: flex; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
+  .row > div { flex: 1; min-width: 200px; }
+  label { font-size: 12.5px; color: var(--muted); display: block; margin-bottom: 6px; }
+  select {
+    width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 13.5px; background: #fff;
+  }
+
+  .dropzone {
+    border: 2px dashed var(--line);
+    border-radius: 10px;
+    padding: 26px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    background: #fafbfd;
+    transition: border-color .15s, background .15s;
+  }
+  .dropzone.drag { border-color: var(--accent); background: var(--accent-soft); }
+  .dropzone strong { display: block; color: var(--ink); font-size: 14px; margin-bottom: 4px; }
+  .dropzone input { display: none; }
+  .filename-chip { font-size: 12.5px; color: var(--accent); margin-top: 8px; }
+
+  button {
+    background: var(--accent); color: #fff; border: none; padding: 10px 18px;
+    border-radius: 8px; font-size: 13.5px; font-weight: 600; cursor: pointer;
+  }
+  button:disabled { background: #b9c6dd; cursor: not-allowed; }
+  button.secondary { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
+  button.email-btn { background: #fef2f2; color: #d9455f; border: 1px solid #fecaca; }
+  button.email-btn:hover { background: #fee2e2; }
+  button.small { padding: 5px 10px; font-size: 12px; }
+
+  .preview-field {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px;
+  }
+  .preview-field:last-child { border-bottom: none; }
+  .preview-field .k { color: var(--muted); }
+  .preview-field .v { font-weight: 600; text-align: right; }
+  .badge { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; margin-left: 8px; }
+  .badge.high { background: var(--high-soft); color: var(--high); }
+  .badge.medium { background: var(--medium-soft); color: var(--medium); }
+  .badge.low { background: var(--low-soft); color: var(--low); }
+  .badge.missing { background: var(--missing-soft); color: var(--missing); }
+  .empty-preview { color: var(--muted); font-size: 13px; text-align: center; padding: 30px 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--muted); font-weight: 600; font-size: 12px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  td { padding: 10px; border-bottom: 1px solid var(--line); }
+  tr:last-child td { border-bottom: none; }
+  .status-pill { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+  .status-pill.completed { background: var(--high-soft); color: var(--high); }
+  .status-pill.pending_review { background: var(--medium-soft); color: var(--medium); }
+
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(20,26,45,0.5);
+    align-items: center; justify-content: center; z-index: 50;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 12px; padding: 24px; width: 640px; max-width: 92vw; max-height: 82vh; overflow-y: auto; }
+  .modal h3 { margin-top: 0; font-size: 15px; }
+  .modal pre { white-space: pre-wrap; background: #fafbfd; border: 1px solid var(--line); border-radius: 8px; padding: 14px; font-size: 12.5px; }
+  .modal .close { float: right; cursor: pointer; color: var(--muted); font-size: 20px; line-height: 1; }
+</style>
+<script>
+  (function() {
+    const sessionStr = localStorage.getItem('healthai_session');
+    const isHttp = window.location.protocol.startsWith('http');
+    if (!sessionStr) {
+      window.location.href = isHttp ? '/static/login.html' : 'login.html';
+      return;
+    }
+    try {
+      const session = JSON.parse(sessionStr);
+      if (session.role === 'admin') {
+        window.location.href = isHttp ? '/static/admin_dashboard.html' : 'admin_dashboard.html';
+      } else {
+        window.location.href = isHttp ? '/static/customer_dashboard.html' : 'customer_dashboard.html';
+      }
+    } catch(e) {
+      window.location.href = isHttp ? '/static/login.html' : 'login.html';
+    }
+  })();
+</script>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="brand"><span class="dot"></span> Healthcare Admin AI</div>
+  <nav>
+    <a href="#" class="active">Dashboard</a>
+    <a href="#" onclick="return false;" title="Not built for this demo">Patients</a>
+    <a href="#" onclick="return false;" title="Not built for this demo">Form Builder</a>
+    <a href="#" onclick="return false;" title="Not built for this demo">History</a>
+    <a href="#" onclick="return false;" title="Not built for this demo">Analytics</a>
+    <a href="#" onclick="return false;" title="Not built for this demo">Settings</a>
+    <a href="#" onclick="handleLogout(); return false;" style="margin-top: 24px; color: #f87171;">Log Out</a>
+  </nav>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1>Dashboard</h1>
+      <div class="sub">Prior authorization &amp; insurance claim intake — automated extraction, human-reviewed</div>
+    </div>
+    <div class="who" style="display: flex; align-items: center; gap: 12px;">
+      <span id="userInfo">Reviewer session</span>
+      <button onclick="handleLogout()" class="secondary small" style="padding: 4px 10px; cursor: pointer; border-radius: 6px;">Log Out</button>
+    </div>
+  </div>
+
+  <div class="stats" id="statsRow">
+    <div class="stat-card">
+      <div class="label">Total Form Entries</div>
+      <div class="value" id="statTotal">—</div>
+    </div>
+    <div class="stat-card ok">
+      <div class="label">AI Auto-Filled</div>
+      <div class="value" id="statAutoFilled">—</div>
+    </div>
+    <div class="stat-card alert">
+      <div class="label">Missing Alerts</div>
+      <div class="value" id="statMissing">—</div>
+    </div>
+    <div class="stat-card pending">
+      <div class="label">Pending Review</div>
+      <div class="value" id="statPending">—</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>Quick Action: Data Entry &amp; Extraction</h2>
+      <div class="card-sub">Step 1 — choose form type. Step 2 — upload the document.</div>
+
+      <div class="row">
+        <div>
+          <label>Form type</label>
+          <select id="formType"></select>
+        </div>
+      </div>
+
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.webp">
+        <strong>Drop a form here, or click to browse</strong>
+        PDF, PNG, or JPG
+        <div class="filename-chip" id="filenameChip"></div>
+      </div>
+
+      <div style="margin-top:16px; display:flex; gap:10px; align-items:center;">
+        <button id="extractBtn">Extract fields</button>
+        <span id="extractStatus" style="font-size:12.5px; color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>AI Extraction Preview</h2>
+      <div class="card-sub">Live-updating from the uploaded document</div>
+      <div id="previewContainer">
+        <div class="empty-preview">Upload a document to see extracted fields here.</div>
+      </div>
+      <div id="reviewActions" style="margin-top:14px; display:none; display: flex; flex-direction: column; gap: 8px;">
+        <button id="generateBtn" style="width:100%;">Review &amp; Complete Entry</button>
+        <button id="emailFormBtn" class="email-btn" style="width:100%; font-weight:700;">📧 Send Missing Fields Form via Email</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Recent Records</h2>
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Form Type</th><th>Source Doc</th><th>Date</th><th>Fields</th><th>Status</th><th>Action</th></tr>
+      </thead>
+      <tbody id="recordsBody">
+        <tr><td colspan="7" style="color:var(--muted); text-align:center; padding:20px;">No records yet — process a form to see it here.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- View Record Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <span class="close" id="modalClose">&times;</span>
+    <h3 id="modalTitle">Record</h3>
+    <pre id="modalBody"></pre>
+  </div>
+</div>
+
+<!-- Email Send Modal -->
+<div class="modal-overlay" id="emailModalOverlay">
+  <div class="modal" style="width: 520px;">
+    <span class="close" id="emailModalClose">&times;</span>
+    <h3>Send Missing Fields Notification Email</h3>
+    <p style="font-size: 13px; color: var(--muted); margin-top: 4px; margin-bottom: 16px;">
+      Enter the user's email address below to send them a direct secure link to fill out the missing fields.
+    </p>
+    <div style="margin-bottom: 16px;">
+      <label for="recipientEmailInput" style="font-weight: 600; margin-bottom: 6px; display: block;">Recipient Email Address</label>
+      <input type="email" id="recipientEmailInput" placeholder="user@example.com" style="width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px; outline: none;">
+    </div>
+    <button id="sendEmailSubmitBtn" style="width:100%; background: var(--accent); color: #fff; padding: 12px; font-size: 14px;">Send Notification Email</button>
+    
+    <div id="emailSendResult" style="margin-top: 16px; padding: 12px; border-radius: 8px; font-size: 13px; display: none; line-height: 1.5;"></div>
+  </div>
+</div>
+
+<script>
+const API_BASE = "http://localhost:8000";
+let SCHEMAS = {};
+let currentFormType = null;
+let currentRecordId = null;
+let targetEmailRecordId = null;
+
+async function loadSchemas() {
+  const res = await fetch(`${API_BASE}/form-types`);
+  SCHEMAS = await res.json();
+  const sel = document.getElementById("formType");
+  sel.innerHTML = "";
+  for (const [key, s] of Object.entries(SCHEMAS)) {
+    const opt = document.createElement("option");
+    opt.value = key;
+    opt.textContent = s.label;
+    sel.appendChild(opt);
+  }
+}
+
+async function refreshStats() {
+  try {
+    const res = await fetch(`${API_BASE}/stats`);
+    const s = await res.json();
+    document.getElementById("statTotal").textContent = s.total_entries;
+    document.getElementById("statAutoFilled").textContent = s.auto_filled_pct + "%";
+    document.getElementById("statMissing").textContent = s.missing_count + " (" + s.missing_pct + "%)";
+    document.getElementById("statPending").textContent = s.pending_review;
+  } catch (e) { console.warn("Backend not reachable yet:", e.message); }
+}
+
+async function refreshRecords() {
+  try {
+    const res = await fetch(`${API_BASE}/records?limit=20`);
+    const rows = await res.json();
+    const body = document.getElementById("recordsBody");
+    if (!rows.length) {
+      body.innerHTML = `<tr><td colspan="7" style="color:var(--muted); text-align:center; padding:20px;">No records yet — process a form to see it here.</td></tr>`;
+      return;
+    }
+    body.innerHTML = "";
+    for (const r of rows) {
+      const label = (SCHEMAS[r.form_type] && SCHEMAS[r.form_type].label) || r.form_type;
+      const tr = document.createElement("tr");
+      const isCompleted = r.status === "completed" || r.status === "Complete";
+      tr.innerHTML = `
+        <td>#${r.id}</td>
+        <td>${label}</td>
+        <td>${r.filename || "—"}</td>
+        <td>${new Date(r.created_at + "Z").toLocaleString()}</td>
+        <td>${r.total_fields - r.missing_fields}/${r.total_fields}</td>
+        <td><span class="status-pill ${r.status}">${isCompleted ? "Complete" : "Pending Review"}</span></td>
+        <td style="display: flex; gap: 6px; align-items: center;">
+          ${isCompleted 
+            ? `<button class="small secondary" style="background:#eff6ff; color:#2f6fed; border-color:#2f6fed; font-weight:600;" onclick="generateReport(${r.id})">📄 Generate Report</button>
+               <button class="small secondary" style="background:#f8fafc; color:#334155; border-color:#cbd5e1; font-weight:600;" onclick="editRecord(${r.id})">✏️ Edit</button>`
+            : `<button class="small email-btn" style="font-weight:600;" onclick="openEmailModal(${r.id})">📧 Send Email</button>`
+          }
+        </td>
+      `;
+      body.appendChild(tr);
+    }
+  } catch (e) { console.warn("Backend not reachable yet:", e.message); }
+}
+
+function editRecord(id) {
+  window.location.href = `/static/fill_missing.html?record_id=${id}`;
+}
+
+async function generateReport(id) {
+  try {
+    const res = await fetch(`${API_BASE}/records/${id}`);
+    if (!res.ok) throw new Error("Could not fetch record details.");
+    const rec = await res.json();
+    const label = (SCHEMAS[rec.form_type] && SCHEMAS[rec.form_type].label) || rec.form_type;
+
+    let draftText = rec.draft_text;
+    if (!draftText) {
+      const parsedFields = JSON.parse(rec.fields_json || "{}");
+      const cleanFields = {};
+      for (const [k, v] of Object.entries(parsedFields)) {
+        cleanFields[k] = (v && typeof v === "object" && "value" in v) ? v.value : String(v || "");
+      }
+      const fd = new FormData();
+      fd.append("form_type", rec.form_type);
+      fd.append("fields_json", JSON.stringify(cleanFields));
+      fd.append("record_id", id);
+      const genRes = await fetch(`${API_BASE}/generate`, { method: "POST", body: fd });
+      if (genRes.ok) {
+        draftText = await genRes.text();
+      }
+    }
+
+    document.getElementById("modalTitle").textContent = `📄 Final Form Report — Record #${rec.id} (${label})`;
+    document.getElementById("modalBody").textContent = draftText || "No report content generated yet.";
+
+    let downloadBtn = document.getElementById("modalDownloadBtn");
+    if (!downloadBtn) {
+      downloadBtn = document.createElement("button");
+      downloadBtn.id = "modalDownloadBtn";
+      downloadBtn.className = "small secondary";
+      downloadBtn.style.marginTop = "14px";
+      downloadBtn.style.width = "100%";
+      downloadBtn.style.background = "#2f6fed";
+      downloadBtn.style.color = "#ffffff";
+      downloadBtn.style.fontWeight = "600";
+      downloadBtn.textContent = "Download Form Report (.txt)";
+      document.getElementById("modalBody").parentNode.appendChild(downloadBtn);
+    }
+    downloadBtn.onclick = () => {
+      const blob = new Blob([document.getElementById("modalBody").textContent], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Report_Record_${rec.id}_${rec.form_type}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    // Remove any legacy modalEditBtn if it exists
+    const oldEditBtn = document.getElementById("modalEditBtn");
+    if (oldEditBtn) oldEditBtn.remove();
+
+    document.getElementById("modalOverlay").classList.add("open");
+  } catch (err) {
+    alert("Failed to generate report: " + err.message);
+  }
+}
+
+document.getElementById("modalClose").addEventListener("click", () => {
+  document.getElementById("modalOverlay").classList.remove("open");
+});
+
+/* Email Modal Handling */
+function openEmailModal(recId) {
+  targetEmailRecordId = recId || currentRecordId;
+  const input = document.getElementById("recipientEmailInput");
+  const sessionStr = localStorage.getItem('healthai_session');
+  if (sessionStr) {
+    try {
+      const session = JSON.parse(sessionStr);
+      if (session.email) input.value = session.email;
+    } catch(e) {}
+  }
+  document.getElementById("emailSendResult").style.display = "none";
+  document.getElementById("emailModalOverlay").classList.add("open");
+}
+
+document.getElementById("emailModalClose").addEventListener("click", () => {
+  document.getElementById("emailModalOverlay").classList.remove("open");
+});
+
+document.getElementById("emailFormBtn").addEventListener("click", () => {
+  if (!currentRecordId) { alert("Please extract a document first."); return; }
+  openEmailModal(currentRecordId);
+});
+
+document.getElementById("sendEmailSubmitBtn").addEventListener("click", async () => {
+  const emailInput = document.getElementById("recipientEmailInput").value.trim();
+  if (!emailInput || !emailInput.includes("@")) {
+    alert("Please enter a valid email address.");
+    return;
+  }
+
+  const btn = document.getElementById("sendEmailSubmitBtn");
+  const resultDiv = document.getElementById("emailSendResult");
+  btn.disabled = true;
+  btn.textContent = "Sending Email Notification...";
+
+  try {
+    const res = await fetch(`${API_BASE}/send-missing-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        record_id: targetEmailRecordId,
+        recipient_email: emailInput
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "Failed to send email.");
+    }
+
+    const data = await res.json();
+    resultDiv.style.display = "block";
+    resultDiv.style.background = "#ecfdf5";
+    resultDiv.style.color = "#065f46";
+    resultDiv.style.border = "1px solid #a7f3d0";
+    resultDiv.innerHTML = `
+      <strong>✅ Notification Link Dispatched!</strong><br>
+      Recipient: <b>${data.recipient}</b><br>
+      Status: ${data.message}<br><br>
+      🔗 <b>Direct Form Link:</b><br>
+      <a href="${data.link}" target="_blank" style="color:#2f6fed; word-break:break-all;">${data.link}</a>
+    `;
+  } catch (e) {
+    resultDiv.style.display = "block";
+    resultDiv.style.background = "#fef2f2";
+    resultDiv.style.color = "#991b1b";
+    resultDiv.style.border = "1px solid #fecaca";
+    resultDiv.innerHTML = `<strong>Error sending email:</strong> ${e.message}`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Send Notification Email";
+  }
+});
+
+const dropzone = document.getElementById("dropzone");
+const fileInput = document.getElementById("fileInput");
+dropzone.addEventListener("click", () => fileInput.click());
+dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("drag"); });
+dropzone.addEventListener("dragleave", () => dropzone.classList.remove("drag"));
+dropzone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropzone.classList.remove("drag");
+  if (e.dataTransfer.files.length) {
+    fileInput.files = e.dataTransfer.files;
+    updateFilenameChip();
+  }
+});
+fileInput.addEventListener("change", updateFilenameChip);
+function updateFilenameChip() {
+  const chip = document.getElementById("filenameChip");
+  chip.textContent = fileInput.files.length ? "Selected: " + fileInput.files[0].name : "";
+}
+
+document.getElementById("extractBtn").addEventListener("click", async () => {
+  if (!fileInput.files.length) { alert("Choose or drop a file first."); return; }
+  currentFormType = document.getElementById("formType").value;
+
+  const btn = document.getElementById("extractBtn");
+  const status = document.getElementById("extractStatus");
+  btn.disabled = true;
+  status.textContent = "Reading document…";
+
+  const fd = new FormData();
+  fd.append("file", fileInput.files[0]);
+  fd.append("form_type", currentFormType);
+
+  try {
+    const res = await fetch(`${API_BASE}/extract`, { method: "POST", body: fd });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.detail || "Extraction failed"); }
+    const data = await res.json();
+    currentRecordId = data.record_id;
+    renderPreview(data);
+    refreshStats();
+    refreshRecords();
+    status.textContent = "Done.";
+  } catch (e) {
+    status.textContent = "";
+    alert("Error: " + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+function renderPreview(data) {
+  const container = document.getElementById("previewContainer");
+  container.innerHTML = "";
+  const labels = (SCHEMAS[currentFormType] || {}).fields || {};
+  let missingCount = 0;
+
+  for (const [key, info] of Object.entries(data.fields || {})) {
+    const conf = info.confidence || "missing";
+    if (conf === "missing" || !info.value) missingCount++;
+    const row = document.createElement("div");
+    row.className = "preview-field";
+    row.innerHTML = `
+      <span class="k">${labels[key] || key}</span>
+      <span class="v">${info.value || "—"}<span class="badge ${conf}">${conf}</span></span>
+    `;
+    container.appendChild(row);
+  }
+  document.getElementById("reviewActions").style.display = "flex";
+  const emailBtn = document.getElementById("emailFormBtn");
+  if (missingCount > 0) {
+    emailBtn.style.display = "block";
+    emailBtn.textContent = `📧 Send Missing Fields Form (${missingCount} missing)`;
+  } else {
+    emailBtn.style.display = "none";
+  }
+}
+
+document.getElementById("generateBtn").addEventListener("click", async () => {
+  const res0 = await fetch(`${API_BASE}/records/${currentRecordId}`);
+  const rec = await res0.json();
+  const parsed = JSON.parse(rec.fields_json);
+  const fields = {};
+  for (const [k, v] of Object.entries(parsed)) fields[k] = v.value || "";
+
+  const fd = new FormData();
+  fd.append("form_type", currentFormType);
+  fd.append("fields_json", JSON.stringify(fields));
+  fd.append("record_id", currentRecordId);
+
+  const btn = document.getElementById("generateBtn");
+  btn.disabled = true;
+  btn.textContent = "Generating…";
+
+  try {
+    const res = await fetch(`${API_BASE}/generate`, { method: "POST", body: fd });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.detail || "Generation failed"); }
+    const text = await res.text();
+    document.getElementById("modalTitle").textContent = "Drafted Output";
+    document.getElementById("modalBody").textContent = text;
+    document.getElementById("modalOverlay").classList.add("open");
+    const emailBtn = document.getElementById("emailFormBtn");
+    if (emailBtn) emailBtn.style.display = "none";
+    refreshStats();
+    refreshRecords();
+  } catch (e) {
+    alert("Error: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Review & Complete Entry";
+  }
+});
+
+function getLoginUrl() {
+  return window.location.protocol.startsWith('http') ? '/static/login.html' : 'login.html';
+}
+
+function handleLogout() {
+  localStorage.removeItem('healthai_session');
+  window.location.href = getLoginUrl();
+}
+
+(async function init() {
+  const sessionStr = localStorage.getItem('healthai_session');
+  if (sessionStr) {
+    try {
+      const session = JSON.parse(sessionStr);
+      const displayName = session.full_name ? `${session.full_name} (${session.email})` : session.email;
+      if (displayName) {
+        document.getElementById('userInfo').textContent = displayName;
+      }
+    } catch(e) {}
+  }
+  await loadSchemas();
+  await refreshStats();
+  await refreshRecords();
+})();
+</script>
+</body>
+</html>
