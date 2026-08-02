@@ -129,7 +129,7 @@ def verify_user(email: str, password: str) -> dict | None:
     return None
 
 
-def insert_record(form_type: str, filename: str, fields_dict: dict, total_fields: int, missing_fields: int, user_email: str = "dr.smith@health.ai") -> int:
+def insert_record(form_type: str, filename: str, fields_dict: dict, total_fields: int, missing_fields: int, user_email: str = "dr.smith@health.ai", file_path: str | None = None) -> int:
     email_clean = user_email.strip().lower()
     sp = get_supabase()
     if not sp:
@@ -144,6 +144,8 @@ def insert_record(form_type: str, filename: str, fields_dict: dict, total_fields
         "user_email": email_clean,
         "status": "pending_review"
     }
+    if file_path:
+        payload["file_path"] = file_path
     res = sp.table("records").insert(payload).execute()
     return res.data[0]["id"] if res.data else 0
 

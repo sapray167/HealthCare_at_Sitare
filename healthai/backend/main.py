@@ -54,7 +54,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize SQLite database on startup
+# Initialize Supabase database on startup
 init_db()
 
 
@@ -194,15 +194,11 @@ async def extract(file: UploadFile = File(...), form_type: str = Form(...), user
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Extraction failed: {e}")
 
-    # Store record in SQLite DB
+    # Store record in Supabase DB
     fields = result.get("fields", {})
     total_fields = len(fields)
     missing_fields = sum(1 for info in fields.values() if isinstance(info, dict) and info.get("confidence") == "missing")
-    record_id = insert_record(form_type, file.filename, fields, total_fields, missing_fields, user_email=user_email)
-    
-    # Update file_path for record
-    with get_conn() as conn:
-        conn.execute("UPDATE records SET file_path = ? WHERE id = ?", (str(saved_path), record_id))
+    record_id = insert_record(form_type, file.filename, fields, total_fields, missing_fields, user_email=user_email, file_path=str(saved_path))
 
     result["record_id"] = record_id
     return result
