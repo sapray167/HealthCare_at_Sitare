@@ -19,7 +19,8 @@ def get_supabase():
     if _supabase_client is not None:
         return _supabase_client
 
-    url = (os.getenv("SUPABASE_URL") or "https://ckupihamcppgduzkbgik.supabase.co/rest/v1/").replace("/rest/v1/", "").replace("/rest/v1", "").strip()
+    raw_url = os.getenv("SUPABASE_URL") or "https://ckupihamcppgduzkbgik.supabase.co"
+    url = raw_url.split("/rest")[0].rstrip("/")
     key = os.getenv("SUPABASE_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY") or "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrdXBpaGFtY3BwZ2R1emtiZ2lrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTY1OTk1MSwiZXhwIjoyMTAxMjM1OTUxfQ.SJPncKylJLRv_zB2kALTcFhe3hbggXjdvIuFPd136wo"
 
     if url and key:

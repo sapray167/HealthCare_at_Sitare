@@ -14,36 +14,33 @@ if str(BASE_DIR) not in sys.path:
 
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse, RedirectResponse, JSONResponse, Response
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import PlainTextResponse, JSONResponse, Response
 from pydantic import BaseModel
 
 try:
-    from backend.schemas import FORM_SCHEMAS, get_schema
-    from backend.extractor import extract_fields
-    from backend.drafter import generate_draft
-    from backend.db import (
-        get_supabase,
+    from backend.schemas import FORM_SCHEMAS, get_schema  # type: ignore
+    from backend.extractor import extract_fields  # type: ignore
+    from backend.drafter import generate_draft  # type: ignore
+    from backend.db import (  # type: ignore
         init_db, insert_record, update_record_draft, get_record, list_records,
         get_stats, create_user, verify_user, save_notification, update_record_merged,
-        insert_pending_record, update_record_extraction, mark_notification_sent
+        insert_pending_record, update_record_extraction
     )
-    from backend.contact_guide import detect_platform, get_field_guidance, list_platforms
-    from backend.emailer import send_missing_fields_email
-    from backend.storage import upload_file_to_storage, download_file_from_storage
+    from backend.contact_guide import detect_platform, get_field_guidance, list_platforms  # type: ignore
+    from backend.emailer import send_missing_fields_email  # type: ignore
+    from backend.storage import upload_file_to_storage, download_file_from_storage  # type: ignore
 except ImportError:
-    from schemas import FORM_SCHEMAS, get_schema
-    from extractor import extract_fields
-    from drafter import generate_draft
-    from db import (
-        get_supabase,
+    from schemas import FORM_SCHEMAS, get_schema  # type: ignore
+    from extractor import extract_fields  # type: ignore
+    from drafter import generate_draft  # type: ignore
+    from db import (  # type: ignore
         init_db, insert_record, update_record_draft, get_record, list_records,
         get_stats, create_user, verify_user, save_notification, update_record_merged,
-        insert_pending_record, update_record_extraction, mark_notification_sent
+        insert_pending_record, update_record_extraction
     )
-    from contact_guide import detect_platform, get_field_guidance, list_platforms
-    from emailer import send_missing_fields_email
-    from storage import upload_file_to_storage, download_file_from_storage
+    from contact_guide import detect_platform, get_field_guidance, list_platforms  # type: ignore
+    from emailer import send_missing_fields_email  # type: ignore
+    from storage import upload_file_to_storage, download_file_from_storage  # type: ignore
 
 app = FastAPI(title="Healthcare Admin AI")
 
