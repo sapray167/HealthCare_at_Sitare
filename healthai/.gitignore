@@ -21,3 +21,9 @@ node_modules/
 dist/
 build/
 .next/
+
+# Local database & uploads
+backend/records.db
+backend/uploads/
+*.db
+
